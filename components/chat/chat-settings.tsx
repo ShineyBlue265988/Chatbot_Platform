@@ -7,6 +7,7 @@ import { FC, useContext, useEffect, useRef } from "react"
 import { Button } from "../ui/button"
 import { ChatSettingsForm } from "../ui/chat-settings-form"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { updateChat } from "@/db/chats"
 
 interface ChatSettingsProps {}
 
@@ -19,7 +20,8 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     models,
     availableHostedModels,
     availableLocalModels,
-    availableOpenRouterModels
+    availableOpenRouterModels,
+    selectedChat
   } = useContext(ChatbotUIContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -28,6 +30,33 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     if (buttonRef.current) {
       buttonRef.current.click()
     }
+  }
+
+  const handleModelChange = async (newModel: LLMID) => {
+    if (!chatSettings || !selectedChat) return
+
+    // Update chat settings
+    const updatedSettings = {
+      ...chatSettings,
+      model: newModel,
+      temperature: Math.min(
+        chatSettings.temperature,
+        CHAT_SETTING_LIMITS[newModel]?.MAX_TEMPERATURE || 1
+      ),
+      contextLength: Math.min(
+        chatSettings.contextLength,
+        CHAT_SETTING_LIMITS[newModel]?.MAX_CONTEXT_LENGTH || 4096
+      )
+    }
+
+    setChatSettings(updatedSettings)
+
+    // Update the chat in the database
+    await updateChat(selectedChat.id, {
+      model: newModel,
+      temperature: updatedSettings.temperature,
+      context_length: updatedSettings.contextLength
+    })
   }
 
   useEffect(() => {
@@ -86,7 +115,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
       >
         <ChatSettingsForm
           chatSettings={chatSettings}
-          onChangeChatSettings={setChatSettings}
+          onChangeChatSettings={handleModelChange}
         />
       </PopoverContent>
     </Popover>
