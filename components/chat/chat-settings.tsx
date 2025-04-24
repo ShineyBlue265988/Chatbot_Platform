@@ -9,9 +9,9 @@ import { ChatSettingsForm } from "../ui/chat-settings-form"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import type { ChatSettings } from "@/types/chat"
 
-interface ChatSettingsComponentProps {}
+interface ChatSettingsButtonProps {}
 
-export const ChatSettingsComponent: FC<ChatSettingsComponentProps> = () => {
+export const ChatSettingsButton: FC<ChatSettingsButtonProps> = () => {
   useHotkey("i", () => handleClick())
 
   const {
