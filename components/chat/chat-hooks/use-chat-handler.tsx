@@ -198,148 +198,194 @@ export const useChatHandler = () => {
     try {
       setUserInput("")
       setIsGenerating(true)
-
-      // Validate chat settings
-      if (!validateChatSettings(chatSettings)) {
-        setIsGenerating(false)
-        return
-      }
-
-      // Create new chat if needed
-      if (!selectedChat) {
-        const newChat = await handleCreateChat(
-          chatSettings,
-          messageContent,
-          selectedWorkspace,
-          selectedAssistant,
-          selectedTools,
-          chatFiles,
-          setSelectedChat,
-          setChats,
-          setChatMessages
-        )
-
-        if (!newChat) return
-      }
-
-      // Create message
-      const message = await handleCreateMessages(
-        messageContent,
-        chatSettings,
-        selectedChat,
-        selectedAssistant,
-        setChatMessages,
-        chatMessages,
-        isRegeneration,
-        newMessageImages,
-        chatImages,
-        setChatImages,
-        newMessageFiles,
-        chatFileItems,
-        setChatFileItems,
-        setShowFilesDisplay,
-        setNewMessageFiles,
-        setNewMessageImages
-      )
-
-      if (!message) return
-
-      // Create temp messages
-      const tempUserMessage: ChatMessage = {
-        message: {
-          chat_id: selectedChat?.id || "",
-          content: messageContent,
-          created_at: new Date().toISOString(),
-          id: Math.random().toString(),
-          image_paths: [],
-          model: chatSettings.model,
-          role: "user",
-          sequence_number: chatMessages.length,
-          updated_at: new Date().toISOString(),
-          user_id: ""
-        },
-        fileItems: []
-      }
-
-      const tempAssistantMessage: ChatMessage = {
-        message: {
-          chat_id: selectedChat?.id || "",
-          content: "",
-          created_at: new Date().toISOString(),
-          id: Math.random().toString(),
-          image_paths: [],
-          model: chatSettings.model,
-          role: "assistant",
-          sequence_number: chatMessages.length + 1,
-          updated_at: new Date().toISOString(),
-          user_id: ""
-        },
-        fileItems: []
-      }
+      setIsPromptPickerOpen(false)
+      setIsFilePickerOpen(false)
+      setNewMessageImages([])
 
       const newAbortController = new AbortController()
       setAbortController(newAbortController)
 
-      await createTempMessages(
-        tempUserMessage,
-        tempAssistantMessage,
-        chatMessages,
-        setChatMessages
-      )
+      const modelData = [
+        ...models.map(model => ({
+          modelId: model.model_id as LLMID,
+          modelName: model.name,
+          provider: "custom" as ModelProvider,
+          hostedId: model.id,
+          platformLink: "",
+          imageInput: false
+        })),
+        ...LLM_LIST,
+        ...availableLocalModels,
+        ...availableOpenRouterModels
+      ].find(llm => llm.modelId === chatSettings?.model)
 
-      // Build final messages
-      const finalMessages = await buildFinalMessages(
-        chatMessages,
+      validateChatSettings(
         chatSettings,
-        selectedAssistant,
+        modelData,
         profile,
         selectedWorkspace,
-        newMessageImages,
-        chatImages,
-        newMessageFiles,
-        chatFileItems
+        messageContent
       )
 
-      // Handle retrieval
-      if (useRetrieval) {
-        await handleRetrieval(
-          finalMessages,
-          chatSettings,
-          selectedAssistant,
-          newAbortController,
-          sourceCount,
-          setToolInUse,
-          setFirstTokenReceived,
-          setChatMessages,
-          setIsGenerating
+      let currentChat = selectedChat ? { ...selectedChat } : null
+
+      const b64Images = newMessageImages.map(image => image.base64)
+
+      let retrievedFileItems: Tables<"file_items">[] = []
+
+      if (
+        (newMessageFiles.length > 0 || chatFiles.length > 0) &&
+        useRetrieval
+      ) {
+        setToolInUse("retrieval")
+
+        retrievedFileItems = await handleRetrieval(
+          userInput,
+          newMessageFiles,
+          chatFiles,
+          chatSettings!.embeddingsProvider,
+          sourceCount
         )
       }
 
-      // Handle chat
-      if (chatSettings.model === "ollama") {
-        await handleLocalChat(
-          finalMessages,
-          chatSettings,
-          selectedAssistant,
+      const { tempUserChatMessage, tempAssistantChatMessage } =
+        createTempMessages(
+          messageContent,
+          chatMessages,
+          chatSettings!,
+          b64Images,
+          isRegeneration,
+          setChatMessages,
+          selectedAssistant
+        )
+
+      let payload: ChatPayload = {
+        chatSettings: chatSettings!,
+        workspaceInstructions: selectedWorkspace!.instructions || "",
+        chatMessages: isRegeneration
+          ? [...chatMessages]
+          : [...chatMessages, tempUserChatMessage],
+        assistant: selectedChat?.assistant_id ? selectedAssistant : null,
+        messageFileItems: retrievedFileItems,
+        chatFileItems: chatFileItems
+      }
+
+      let generatedText = ""
+
+      if (selectedTools.length > 0) {
+        setToolInUse("Tools")
+
+        const formattedMessages = await buildFinalMessages(
+          payload,
+          profile!,
+          chatImages
+        )
+
+        const response = await fetch("/api/chat/tools", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chatSettings: payload.chatSettings,
+            messages: formattedMessages,
+            selectedTools
+          })
+        })
+
+        setToolInUse("none")
+
+        generatedText = await processResponse(
+          response,
+          isRegeneration
+            ? payload.chatMessages[payload.chatMessages.length - 1]
+            : tempAssistantChatMessage,
+          true,
           newAbortController,
           setFirstTokenReceived,
           setChatMessages,
-          setIsGenerating
+          setToolInUse
         )
       } else {
-        await handleHostedChat(
-          finalMessages,
-          chatSettings,
-          selectedAssistant,
-          newAbortController,
-          setFirstTokenReceived,
-          setChatMessages,
-          setIsGenerating
-        )
+        if (modelData!.provider === "ollama") {
+          generatedText = await handleLocalChat(
+            payload,
+            profile!,
+            chatSettings!,
+            tempAssistantChatMessage,
+            isRegeneration,
+            newAbortController,
+            setIsGenerating,
+            setFirstTokenReceived,
+            setChatMessages,
+            setToolInUse
+          )
+        } else {
+          generatedText = await handleHostedChat(
+            payload,
+            profile!,
+            modelData!,
+            tempAssistantChatMessage,
+            isRegeneration,
+            newAbortController,
+            newMessageImages,
+            chatImages,
+            setIsGenerating,
+            setFirstTokenReceived,
+            setChatMessages,
+            setToolInUse
+          )
+        }
       }
-    } catch (error) {
-      console.error(error)
+
+      if (!currentChat) {
+        currentChat = await handleCreateChat(
+          chatSettings!,
+          profile!,
+          selectedWorkspace!,
+          messageContent,
+          selectedAssistant!,
+          newMessageFiles,
+          setSelectedChat,
+          setChats,
+          setChatFiles
+        )
+      } else {
+        const updatedChat = await updateChat(currentChat.id, {
+          updated_at: new Date().toISOString()
+        })
+
+        setChats(prevChats => {
+          const updatedChats = prevChats.map(prevChat =>
+            prevChat.id === updatedChat.id ? updatedChat : prevChat
+          )
+
+          return updatedChats
+        })
+      }
+
+      await handleCreateMessages(
+        chatMessages,
+        currentChat,
+        profile!,
+        modelData!,
+        messageContent,
+        generatedText,
+        newMessageImages,
+        isRegeneration,
+        retrievedFileItems,
+        setChatMessages,
+        setChatFileItems,
+        setChatImages,
+        selectedAssistant
+      )
+
       setIsGenerating(false)
+      setFirstTokenReceived(false)
+    } catch (error) {
+      setIsGenerating(false)
+      setFirstTokenReceived(false)
+      setUserInput(startingInput)
     }
   }
 
