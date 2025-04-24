@@ -37,6 +37,13 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
 
   if (!profile) return null
 
+  const handleModelChange = (model: string) => {
+    onChangeChatSettings({
+      ...chatSettings,
+      model: model as any
+    })
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-1">
@@ -44,9 +51,7 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
 
         <ModelSelect
           selectedModelId={chatSettings.model}
-          onSelectModel={model => {
-            onChangeChatSettings({ ...chatSettings, model })
-          }}
+          onSelectModel={handleModelChange}
         />
       </div>
 

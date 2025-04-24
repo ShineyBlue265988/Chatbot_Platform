@@ -1,16 +1,17 @@
 import { ChatbotUIContext } from "@/context/context"
+import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
-import useHotkey from "@/lib/hooks/use-hotkey"
-import { LLMID, ModelProvider } from "@/types"
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef } from "react"
 import { Button } from "../ui/button"
-import { ChatSettingsForm } from "../ui/chat-settings-form"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
+import { ChatSettingsForm } from "../ui/chat-settings-form"
+import useHotkey from "@/lib/hooks/use-hotkey"
+import type { ChatSettings } from "@/types/chat"
 
-interface ChatSettingsProps {}
+interface ChatSettingsComponentProps {}
 
-export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
+export const ChatSettingsComponent: FC<ChatSettingsComponentProps> = () => {
   useHotkey("i", () => handleClick())
 
   const {
@@ -19,7 +20,9 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     models,
     availableHostedModels,
     availableLocalModels,
-    availableOpenRouterModels
+    availableOpenRouterModels,
+    selectedChat,
+    setSelectedChat
   } = useContext(ChatbotUIContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -46,13 +49,29 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     })
   }, [chatSettings?.model])
 
+  const handleModelChange = (value: ChatSettings) => {
+    if (!chatSettings) return
+
+    // Update chat settings with new model
+    setChatSettings(value)
+
+    // If there's an active chat, update its model
+    if (selectedChat) {
+      const updatedChat = {
+        ...selectedChat,
+        model: value.model
+      }
+      setSelectedChat(updatedChat)
+    }
+  }
+
   if (!chatSettings) return null
 
   const allModels = [
     ...models.map(model => ({
-      modelId: model.model_id as LLMID,
+      modelId: model.model_id,
       modelName: model.name,
-      provider: "custom" as ModelProvider,
+      provider: "custom" as const,
       hostedId: model.id,
       platformLink: "",
       imageInput: false
@@ -62,31 +81,23 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     ...availableOpenRouterModels
   ]
 
-  const fullModel = allModels.find(llm => llm.modelId === chatSettings.model)
-
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <Button
           ref={buttonRef}
-          className="flex items-center space-x-2"
+          className="size-[30px] p-0"
           variant="ghost"
+          size="icon"
         >
-          <div className="max-w-[120px] truncate text-lg sm:max-w-[300px] lg:max-w-[500px]">
-            {fullModel?.modelName || chatSettings.model}
-          </div>
-
-          <IconAdjustmentsHorizontal size={28} />
+          <IconAdjustmentsHorizontal className="size-4" />
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent
-        className="bg-background border-input relative flex max-h-[calc(100vh-60px)] w-[300px] flex-col space-y-4 overflow-auto rounded-lg border-2 p-6 sm:w-[350px] md:w-[400px] lg:w-[500px] dark:border-none"
-        align="end"
-      >
+      <PopoverContent className="w-80">
         <ChatSettingsForm
           chatSettings={chatSettings}
-          onChangeChatSettings={setChatSettings}
+          onChangeChatSettings={handleModelChange}
         />
       </PopoverContent>
     </Popover>

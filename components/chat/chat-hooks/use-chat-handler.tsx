@@ -229,6 +229,17 @@ export const useChatHandler = () => {
 
       let currentChat = selectedChat ? { ...selectedChat } : null
 
+      if (currentChat && currentChat.model !== chatSettings?.model) {
+        currentChat = {
+          ...currentChat,
+          model: chatSettings?.model || currentChat.model
+        }
+        await updateChat(currentChat.id, {
+          model: chatSettings?.model || currentChat.model,
+          updated_at: new Date().toISOString()
+        })
+      }
+
       const b64Images = newMessageImages.map(image => image.base64)
 
       let retrievedFileItems: Tables<"file_items">[] = []
