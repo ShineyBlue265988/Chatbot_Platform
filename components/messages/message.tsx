@@ -11,7 +11,9 @@ import {
   IconCircleFilled,
   IconFileText,
   IconMoodSmile,
-  IconPencil
+  IconPencil,
+  IconChevronDown,
+  IconChevronUp
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useEffect, useRef, useState } from "react"
@@ -33,7 +35,7 @@ interface MessageProps {
   isLast: boolean
   onStartEdit: (message: Tables<"messages">) => void
   onCancelEdit: () => void
-  onSubmitEdit: (value: string, sequenceNumber: number) => void
+  onSubmitEdit: (content: string, sequenceNumber: number) => void
 }
 
 export const Message: FC<MessageProps> = ({
@@ -68,6 +70,7 @@ export const Message: FC<MessageProps> = ({
 
   const [isHovering, setIsHovering] = useState(false)
   const [editedMessage, setEditedMessage] = useState(message.content)
+  const [showSearchResults, setShowSearchResults] = useState(false)
 
   const [showImagePreview, setShowImagePreview] = useState(false)
   const [selectedImage, setSelectedImage] = useState<MessageImage | null>(null)
@@ -179,6 +182,32 @@ export const Message: FC<MessageProps> = ({
     return acc
   }, fileAccumulator)
 
+  // Extract content based on markers
+  const hasSearchResults = message.content.includes(
+    "[WEB_SEARCH_RESULTS_START]"
+  )
+  const searchResults = hasSearchResults
+    ? message.content
+        .split("[WEB_SEARCH_RESULTS_START]")[1]
+        .split("[WEB_SEARCH_RESULTS_END]")[0]
+    : ""
+  const hasInstructions = message.content.includes("[INSTRUCTIONS_START]")
+  const instructions = hasInstructions
+    ? message.content
+        .split("[INSTRUCTIONS_START]")[1]
+        .split("[INSTRUCTIONS_END]")[0]
+    : ""
+  const hasUserQuery = message.content.includes("[USER_QUERY_START]")
+  const userQuery = hasUserQuery
+    ? message.content
+        .split("[USER_QUERY_START]")[1]
+        .split("[USER_QUERY_END]")[0]
+    : ""
+
+  // Get the actual answer content (everything after the last marker)
+  const answerContent =
+    message.content.split("[USER_QUERY_END]")[1] || message.content
+
   return (
     <div
       className={cn(
@@ -190,17 +219,6 @@ export const Message: FC<MessageProps> = ({
       onKeyDown={handleKeyDown}
     >
       <div className="relative flex w-full flex-col p-6 sm:w-[550px] sm:px-0 md:w-[650px] lg:w-[650px] xl:w-[700px]">
-        <div className="absolute right-5 top-7 sm:right-0">
-          <MessageActions
-            onCopy={handleCopy}
-            onEdit={handleStartEdit}
-            isAssistant={message.role === "assistant"}
-            isLast={isLast}
-            isEditing={isEditing}
-            isHovering={isHovering}
-            onRegenerate={handleRegenerate}
-          />
-        </div>
         <div className="space-y-3">
           {message.role === "system" ? (
             <div className="flex items-center space-x-4">
@@ -266,6 +284,7 @@ export const Message: FC<MessageProps> = ({
               </div>
             </div>
           )}
+
           {!firstTokenReceived &&
           isGenerating &&
           isLast &&
@@ -296,17 +315,46 @@ export const Message: FC<MessageProps> = ({
                 }
               })()}
             </>
-          ) : isEditing ? (
-            <TextareaAutosize
-              textareaRef={editInputRef}
-              className="text-md"
-              value={editedMessage}
-              onValueChange={setEditedMessage}
-              maxRows={20}
-            />
           ) : (
-            <MessageMarkdown content={message.content} />
+            <>
+              <MessageMarkdown content={userQuery} />
+              {hasSearchResults && (
+                <div className="text-muted-foreground mb-2 flex items-center space-x-2 text-xs">
+                  <button
+                    onClick={() => setShowSearchResults(!showSearchResults)}
+                    className="hover:text-foreground flex items-center"
+                  >
+                    {showSearchResults ? (
+                      <IconChevronUp size={16} />
+                    ) : (
+                      <IconChevronDown size={16} />
+                    )}
+                    <span className="ml-1">Search Results</span>
+                  </button>
+                </div>
+              )}
+
+              {showSearchResults && hasSearchResults && (
+                <div className="text-muted-foreground mb-4 text-xs">
+                  <pre className="whitespace-pre-wrap">{searchResults}</pre>
+                </div>
+              )}
+
+              <MessageMarkdown content={answerContent} />
+            </>
           )}
+        </div>
+
+        <div className="absolute right-5 top-7 sm:right-0">
+          <MessageActions
+            onCopy={handleCopy}
+            onEdit={handleStartEdit}
+            isAssistant={message.role === "assistant"}
+            isLast={isLast}
+            isEditing={isEditing}
+            isHovering={isHovering}
+            onRegenerate={handleRegenerate}
+          />
         </div>
 
         {fileItems.length > 0 && (

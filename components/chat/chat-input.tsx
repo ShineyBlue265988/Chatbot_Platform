@@ -6,7 +6,8 @@ import {
   IconBolt,
   IconCirclePlus,
   IconPlayerStopFilled,
-  IconSend
+  IconSend,
+  IconSearch
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useEffect, useRef, useState } from "react"
@@ -20,6 +21,7 @@ import { useChatHandler } from "./chat-hooks/use-chat-handler"
 import { useChatHistoryHandler } from "./chat-hooks/use-chat-history"
 import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
 import { useSelectFileHandler } from "./chat-hooks/use-select-file-handler"
+import { useWebSearch } from "./chat-hooks/use-web-search"
 
 interface ChatInputProps {}
 
@@ -31,6 +33,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
   })
 
   const [isTyping, setIsTyping] = useState<boolean>(false)
+  const [isWebSearchMode, setIsWebSearchMode] = useState<boolean>(false)
 
   const {
     isAssistantPickerOpen,
@@ -68,6 +71,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
   const { filesToAccept, handleSelectDeviceFile } = useSelectFileHandler()
 
+  const { handleWebSearch } = useWebSearch()
+
   const {
     setNewMessageContentToNextUserMessage,
     setNewMessageContentToPreviousUserMessage
@@ -85,7 +90,18 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     if (!isTyping && event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       setIsPromptPickerOpen(false)
-      handleSendMessage(userInput, chatMessages, false)
+      if (isWebSearchMode) {
+        // Handle web search
+        handleWebSearch(userInput)
+        console.log(
+          "web search mode==============================>>>>>>>>>",
+          isWebSearchMode
+        )
+        // setIsWebSearchMode(false)
+      } else {
+        handleSendMessage(userInput, chatMessages, false)
+        // console.log('web search mode==============================>>>>>>>>>', isWebSearchMode)
+      }
     }
 
     // Consolidate conditions to avoid TypeScript error
@@ -223,6 +239,15 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
             onClick={() => fileInputRef.current?.click()}
           />
 
+          <IconSearch
+            className={cn(
+              "absolute bottom-[12px] left-12 cursor-pointer p-1 hover:opacity-50",
+              isWebSearchMode && "text-blue-500"
+            )}
+            size={32}
+            onClick={() => setIsWebSearchMode(!isWebSearchMode)}
+          />
+
           {/* Hidden input to select files from device */}
           <Input
             ref={fileInputRef}
@@ -238,11 +263,12 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
         <TextareaAutosize
           textareaRef={chatInputRef}
-          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder={t(
-            // `Ask anything. Type "@" for assistants, "/" for prompts, "#" for files, and "!" for tools.`
-            `Ask anything. Type @  /  #  !`
-          )}
+          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent py-2 pl-24 pr-14 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder={
+            isWebSearchMode
+              ? t("Search the web...")
+              : t("Ask anything. Type @  /  #  !")
+          }
           onValueChange={handleInputChange}
           value={userInput}
           minRows={1}
@@ -269,7 +295,18 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
               onClick={() => {
                 if (!userInput) return
 
-                handleSendMessage(userInput, chatMessages, false)
+                if (isWebSearchMode) {
+                  // Handle web search
+                  handleWebSearch(userInput)
+                  console.log(
+                    "web search mode==============================>>>>>>>>>",
+                    isWebSearchMode
+                  )
+                  // setIsWebSearchMode(false)
+                } else {
+                  handleSendMessage(userInput, chatMessages, false)
+                  // console.log('web search mode==============================>>>>>>>>>', isWebSearchMode)
+                }
               }}
               size={30}
             />
