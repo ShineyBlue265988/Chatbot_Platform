@@ -80,7 +80,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     model: "gpt-4-turbo-preview",
     prompt: "You are a helpful AI assistant.",
     temperature: 0.5,
-    contextLength: 4000,
+    contextLength: 8000,
     includeProfileContext: true,
     includeWorkspaceInstructions: true,
     embeddingsProvider: "openai"
