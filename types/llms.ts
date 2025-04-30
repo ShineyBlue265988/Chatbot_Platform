@@ -1,12 +1,12 @@
 import { ModelProvider } from "."
 
-export type LLMID =
-  | OpenAILLMID
-  | GoogleLLMID
-  | AnthropicLLMID
-  | MistralLLMID
-  | GroqLLMID
-  | PerplexityLLMID
+// export type LLMID =
+//   | OpenAILLMID
+//   | GoogleLLMID
+//   | AnthropicLLMID
+//   | MistralLLMID
+//   | GroqLLMID
+//   | PerplexityLLMID
 
 // OpenAI Models (UPDATED 5/13/24)
 export type OpenAILLMID =
@@ -68,6 +68,8 @@ export type PerplexityLLMID =
   | "sonar-small-online" // Sonar Small Online
   | "sonar-medium-chat" // Sonar Medium Chat
   | "sonar-medium-online" // Sonar Medium Online
+
+export type LLMID = string // Or a more specific union type if applicable
 
 export interface LLM {
   modelId: LLMID
