@@ -1,9 +1,8 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
+import { StreamingTextResponse } from "ai"
+import { ChatService } from "@/lib/langchain/services/chat-service"
 import { ServerRuntime } from "next"
-import OpenAI from "openai"
-import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
 export const runtime: ServerRuntime = "edge"
 
@@ -19,22 +18,26 @@ export async function POST(request: Request) {
 
     checkApiKey(profile.openrouter_api_key, "OpenRouter")
 
-    const openai = new OpenAI({
-      apiKey: profile.openrouter_api_key || "",
-      baseURL: "https://openrouter.ai/api/v1"
-    })
+    const chatService = new ChatService()
 
-    const response = await openai.chat.completions.create({
-      model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages: messages as ChatCompletionCreateParamsBase["messages"],
-      temperature: chatSettings.temperature,
-      max_tokens: undefined,
-      stream: true
-    })
+    const encoder = new TextEncoder()
+    const stream = new TransformStream()
+    const writer = stream.writable.getWriter()
 
-    const stream = OpenAIStream(response)
+    chatService
+      .streamChat(
+        messages,
+        chatSettings,
+        profile.openrouter_api_key || "",
+        async token => {
+          await writer.write(encoder.encode(token))
+        }
+      )
+      .then(async () => {
+        await writer.close()
+      })
 
-    return new StreamingTextResponse(stream)
+    return new StreamingTextResponse(stream.readable)
   } catch (error: any) {
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500

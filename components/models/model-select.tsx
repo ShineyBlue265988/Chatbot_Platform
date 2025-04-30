@@ -12,15 +12,18 @@ import { Input } from "../ui/input"
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { ModelIcon } from "./model-icon"
 import { ModelOption } from "./model-option"
+import { cn } from "@/lib/utils"
 
 interface ModelSelectProps {
   selectedModelId: string
   onSelectModel: (modelId: LLMID) => void
+  className?: string
 }
 
 export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
-  onSelectModel
+  onSelectModel,
+  className
 }) => {
   const {
     profile,
@@ -91,18 +94,21 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       }}
     >
       <DropdownMenuTrigger
-        className="bg-background w-full justify-start border-2 px-3 py-5"
+        className={cn(
+          "bg-background w-full justify-start border-2 px-6 py-8",
+          className
+        )}
         asChild
         disabled={allModels.length === 0}
       >
         {allModels.length === 0 ? (
-          <div className="rounded text-sm font-bold">
+          <div className="rounded text-lg font-bold">
             Unlock models by entering API keys in your profile settings.
           </div>
         ) : (
           <Button
             ref={triggerRef}
-            className="flex items-center justify-between"
+            className="flex items-center justify-between text-xl"
             variant="ghost"
           >
             <div className="flex items-center">
@@ -110,10 +116,10 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                 <>
                   <ModelIcon
                     provider={selectedModel?.provider}
-                    width={26}
-                    height={26}
+                    width={48}
+                    height={48}
                   />
-                  <div className="ml-2 flex items-center">
+                  <div className="ml-4 flex items-center">
                     {selectedModel?.modelName}
                   </div>
                 </>
@@ -122,7 +128,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
               )}
             </div>
 
-            <IconChevronDown />
+            <IconChevronDown size={32} />
           </Button>
         )}
       </DropdownMenuTrigger>

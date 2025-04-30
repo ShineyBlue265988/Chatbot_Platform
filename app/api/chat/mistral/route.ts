@@ -1,10 +1,10 @@
-import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
-import OpenAI from "openai"
+import { StreamingTextResponse } from "ai"
+import { ChatService } from "@/lib/langchain/services/chat-service"
+import { ServerRuntime } from "next"
 
-export const runtime = "edge"
+export const runtime: ServerRuntime = "edge"
 
 export async function POST(request: Request) {
   const json = await request.json()
@@ -15,36 +15,53 @@ export async function POST(request: Request) {
 
   try {
     const profile = await getServerProfile()
-
     checkApiKey(profile.mistral_api_key, "Mistral")
 
-    // Mistral is compatible the OpenAI SDK
-    const mistral = new OpenAI({
-      apiKey: profile.mistral_api_key || "",
-      baseURL: "https://api.mistral.ai/v1"
-    })
+    const chatService = new ChatService()
 
-    const response = await mistral.chat.completions.create({
-      model: chatSettings.model,
-      messages,
-      max_tokens:
-        CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH,
-      stream: true
-    })
+    const encoder = new TextEncoder()
+    const stream = new TransformStream()
+    const writer = stream.writable.getWriter()
 
-    // Convert the response into a friendly text-stream.
-    const stream = OpenAIStream(response)
+    chatService
+      .streamChat(
+        messages,
+        chatSettings,
+        profile.mistral_api_key || "",
+        async token => {
+          await writer.write(encoder.encode(token))
+        }
+      )
+      .then(async () => {
+        await writer.close()
+      })
 
-    // Respond with the stream
-    return new StreamingTextResponse(stream)
+    return new StreamingTextResponse(stream.readable)
   } catch (error: any) {
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
+    // Handle model deprecation errors
+    if (
+      errorMessage.includes("will be deprecated") ||
+      errorMessage.includes("has been deprecated")
+    ) {
+      return new Response(
+        JSON.stringify({
+          message: errorMessage,
+          type: "model_deprecation"
+        }),
+        {
+          status: 400
+        }
+      )
+    }
+
+    // Handle API key errors
     if (errorMessage.toLowerCase().includes("api key not found")) {
       errorMessage =
         "Mistral API Key not found. Please set it in your profile settings."
-    } else if (errorCode === 401) {
+    } else if (errorMessage.toLowerCase().includes("incorrect api key")) {
       errorMessage =
         "Mistral API Key is incorrect. Please fix it in your profile settings."
     }

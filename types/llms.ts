@@ -40,10 +40,18 @@ export type MistralLLMID =
   | "mistral-large-latest" // Mistral Large
 
 export type GroqLLMID =
-  | "llama3-8b-8192" // LLaMA3-8b
-  | "llama3-70b-8192" // LLaMA3-70b
-  | "mixtral-8x7b-32768" // Mixtral-8x7b
-  | "gemma-7b-it" // Gemma-7b IT
+  | "llama3-8b-8192" // Llama 3 8B
+  | "llama3-70b-8192" // Llama 3 70B
+  | "llama-3.1-8b-instant" // Llama 3.1 8B Instant
+  | "llama-3.3-70b-versatile" // Llama 3.3 70B Versatile
+  | "meta-llama/llama-4-scout-17b-16e-instruct" // Llama 4 Scout 17B
+  | "meta-llama/llama-4-maverick-17b-128e-instruct" // Llama 4 Maverick 17B
+  | "mistral-saba-24b" // Mistral Saba 24B
+  | "gemma2-9b-it" // Gemma 2 9B IT
+  | "deepseek-r1-distill-llama-70b" // DeepSeek R1 Distill Llama 70B
+  | "qwen-qwq-32b" // Qwen QWQ 32B
+  | "compound-beta" // Compound Beta
+  | "compound-beta-mini" // Compound Beta Mini
 
 // Perplexity Models (UPDATED 1/31/24)
 export type PerplexityLLMID =

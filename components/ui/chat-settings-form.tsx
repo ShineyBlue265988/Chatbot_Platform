@@ -52,6 +52,7 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
         <ModelSelect
           selectedModelId={chatSettings.model}
           onSelectModel={handleModelChange}
+          className="flex space-x-3 text-lg"
         />
       </div>
 

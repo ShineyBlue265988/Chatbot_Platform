@@ -16,6 +16,9 @@ module.exports = {
       }
     },
     extend: {
+      borderColor: ({ theme }) => ({
+        DEFAULT: theme('colors.border', '#e5e7eb') // Add this
+      }),
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
