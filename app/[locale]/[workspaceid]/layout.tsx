@@ -16,7 +16,7 @@ import { getWorkspaceById } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 //
-import { LLMID } from "@/types/llms"
+// import { LLMID } from "@/types/llms"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ReactNode, useContext, useEffect, useState } from "react"
 import Loading from "../loading"
@@ -158,9 +158,10 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setModels(modelData.models)
 
     setChatSettings({
-      model: (searchParams.get("model") ||
+      model:
+        searchParams.get("model") ||
         workspace?.default_model ||
-        "gpt-4-1106-preview") as LLMID,
+        "gpt-4-1106-preview",
       prompt:
         workspace?.default_prompt ||
         "You are a friendly, helpful AI assistant.",
