@@ -200,11 +200,23 @@ export async function POST(request: Request) {
 
     const secondResponse = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages,
+      messages: [...messages, ...toolCalls],
+      temperature: chatSettings.temperature,
       stream: true
     })
 
-    const stream = OpenAIStream(secondResponse)
+    // Convert the OpenAI stream to a ReadableStream
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of secondResponse) {
+          const text = chunk.choices[0]?.delta?.content || ""
+          if (text) {
+            controller.enqueue(text)
+          }
+        }
+        controller.close()
+      }
+    })
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {

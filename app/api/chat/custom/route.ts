@@ -1,64 +1,49 @@
-import { Database } from "@/supabase/types"
-import { ChatSettings } from "@/types"
-import { createClient } from "@supabase/supabase-js"
-import { OpenAIStream, StreamingTextResponse } from "ai"
-import { ServerRuntime } from "next"
+import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { ChatPayload } from "@/types"
+import { StreamingTextResponse } from "ai"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
-export const runtime: ServerRuntime = "edge"
+export const runtime = "edge"
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages, customModelId } = json as {
-    chatSettings: ChatSettings
-    messages: any[]
-    customModelId: string
-  }
+  const { chatSettings, messages } = json as ChatPayload
 
   try {
-    const supabaseAdmin = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const profile = await getServerProfile()
 
-    const { data: customModel, error } = await supabaseAdmin
-      .from("models")
-      .select("*")
-      .eq("id", customModelId)
-      .single()
+    checkApiKey(profile.openai_api_key, "OpenAI")
 
-    if (!customModel) {
-      throw new Error(error.message)
-    }
-
-    const custom = new OpenAI({
-      apiKey: customModel.api_key || "",
-      baseURL: customModel.base_url
+    const openai = new OpenAI({
+      apiKey: profile.openai_api_key || undefined
     })
 
-    const response = await custom.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
       messages: messages as ChatCompletionCreateParamsBase["messages"],
       temperature: chatSettings.temperature,
+      max_tokens: chatSettings.model === "gpt-4-vision-preview" ? 4096 : null,
       stream: true
     })
 
-    const stream = OpenAIStream(response)
+    // Convert the OpenAI stream to a ReadableStream
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of response) {
+          const text = chunk.choices[0]?.delta?.content || ""
+          if (text) {
+            controller.enqueue(text)
+          }
+        }
+        controller.close()
+      }
+    })
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
-    let errorMessage = error.message || "An unexpected error occurred"
+    const errorMessage = error.error?.message || "An unexpected error occurred"
     const errorCode = error.status || 500
-
-    if (errorMessage.toLowerCase().includes("api key not found")) {
-      errorMessage =
-        "Custom API Key not found. Please set it in your profile settings."
-    } else if (errorMessage.toLowerCase().includes("incorrect api key")) {
-      errorMessage =
-        "Custom API Key is incorrect. Please fix it in your profile settings."
-    }
-
     return new Response(JSON.stringify({ message: errorMessage }), {
       status: errorCode
     })

@@ -93,13 +93,13 @@ export const createTempMessages = (
       chat_id: "",
       assistant_id: null,
       content: messageContent,
-      created_at: "",
+      created_at: new Date().toISOString(),
       id: uuidv4(),
-      image_paths: b64Images,
+      image_paths: [],
       model: chatSettings.model,
       role: "user",
       sequence_number: chatMessages.length,
-      updated_at: "",
+      updated_at: new Date().toISOString(),
       user_id: ""
     },
     fileItems: []
@@ -110,13 +110,13 @@ export const createTempMessages = (
       chat_id: "",
       assistant_id: selectedAssistant?.id || null,
       content: "",
-      created_at: "",
+      created_at: new Date().toISOString(),
       id: uuidv4(),
       image_paths: [],
       model: chatSettings.model,
       role: "assistant",
       sequence_number: chatMessages.length + 1,
-      updated_at: "",
+      updated_at: new Date().toISOString(),
       user_id: ""
     },
     fileItems: []
@@ -177,7 +177,7 @@ export const handleLocalChat = async (
   return await processResponse(
     response,
     isRegeneration
-      ? payload.chatMessages[payload.chatMessages.length - 1]
+      ? payload.messages[payload.messages.length - 1]
       : tempAssistantMessage,
     false,
     newAbortController,
@@ -239,7 +239,7 @@ export const handleHostedChat = async (
   return await processResponse(
     response,
     isRegeneration
-      ? payload.chatMessages[payload.chatMessages.length - 1]
+      ? payload.messages[payload.messages.length - 1]
       : tempAssistantChatMessage,
     true,
     newAbortController,

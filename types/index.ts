@@ -23,12 +23,20 @@ export interface ChatSettings {
 }
 
 export interface ChatMessage {
-  role: "user" | "assistant" | "system" | "function"
-  content: string
-  name?: string
-  tool_call_id?: string
-  chat_id?: string
-  assistant_id?: string
+  message: {
+    chat_id: string
+    assistant_id: string | null
+    content: string
+    created_at: string
+    id: string
+    image_paths: string[]
+    model: string
+    role: string
+    sequence_number: number
+    updated_at: string | null
+    user_id: string
+  }
+  fileItems: string[]
 }
 
 export interface ChatPayload {
@@ -66,5 +74,6 @@ export interface MessageImage {
   messageId: string
   width?: number
   height?: number
-  base64?: string // Add this property for base64-encoded image data
+  base64?: string
+  file?: File | null
 }

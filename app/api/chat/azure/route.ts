@@ -1,6 +1,6 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
-import { ChatAPIPayload } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
+import { ChatPayload } from "@/types"
+import { StreamingTextResponse } from "ai"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
@@ -8,7 +8,7 @@ export const runtime = "edge"
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as ChatAPIPayload
+  const { chatSettings, messages } = json as ChatPayload
 
   try {
     const profile = await getServerProfile()
@@ -55,11 +55,22 @@ export async function POST(request: Request) {
       model: DEPLOYMENT_ID as ChatCompletionCreateParamsBase["model"],
       messages: messages as ChatCompletionCreateParamsBase["messages"],
       temperature: chatSettings.temperature,
-      max_tokens: chatSettings.model === "gpt-4-vision-preview" ? 4096 : null, // TODO: Fix
+      max_tokens: chatSettings.model === "gpt-4-vision-preview" ? 4096 : null,
       stream: true
     })
 
-    const stream = OpenAIStream(response)
+    // Convert the Azure OpenAI stream to a ReadableStream
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of response) {
+          const text = chunk.choices[0]?.delta?.content || ""
+          if (text) {
+            controller.enqueue(text)
+          }
+        }
+        controller.close()
+      }
+    })
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
