@@ -6,7 +6,6 @@ import {
 } from "@/db/storage/workspace-images"
 import { updateWorkspace } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
-import { LLMID } from "@/types"
 import { IconHome, IconSettings } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -128,7 +127,7 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       defaultChatSettings.embeddingsProvider
     ) {
       setChatSettings({
-        model: defaultChatSettings.model as LLMID,
+        model: defaultChatSettings.model as string,
         prompt: defaultChatSettings.prompt,
         temperature: defaultChatSettings.temperature,
         contextLength: defaultChatSettings.contextLength,

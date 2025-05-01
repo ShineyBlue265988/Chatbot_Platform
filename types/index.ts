@@ -16,7 +16,7 @@ export * from "./sharing"
 export * from "./sidebar-data"
 
 export interface LLM {
-  modelId: LLMID
+  modelId: string
   modelName: string
   provider: ModelProvider
   hostedId: string

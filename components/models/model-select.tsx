@@ -1,5 +1,6 @@
 import { ChatbotUIContext } from "@/context/context"
-import { LLM, LLMID, ModelProvider } from "@/types"
+import { LLM } from "@/types"
+import { ModelProvider } from "@/types/models"
 import { IconCheck, IconChevronDown } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils"
 
 interface ModelSelectProps {
   selectedModelId: string
-  onSelectModel: (modelId: LLMID) => void
+  onSelectModel: (modelId: string) => void
   className?: string
 }
 
@@ -48,14 +49,14 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     }
   }, [isOpen])
 
-  const handleSelectModel = (modelId: LLMID) => {
+  const handleSelectModel = (modelId: string) => {
     onSelectModel(modelId)
     setIsOpen(false)
   }
 
   const allModels = [
     ...models.map(model => ({
-      modelId: model.model_id as LLMID,
+      modelId: model.model_id as string,
       modelName: model.name,
       provider: "custom" as ModelProvider,
       hostedId: model.id,

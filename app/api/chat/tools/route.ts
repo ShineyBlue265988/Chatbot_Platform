@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       stream: true
     })
 
-    const stream = OpenAIStream(secondResponse)
+    const stream = OpenAIStream(secondResponse as any)
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {

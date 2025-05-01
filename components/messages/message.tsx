@@ -3,7 +3,8 @@ import { ChatbotUIContext } from "@/context/context"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
-import { LLM, LLMID, MessageImage, ModelProvider } from "@/types"
+import { LLM, MessageImage } from "@/types"
+import { ModelProvider } from "@/types/models"
 import {
   IconBolt,
   IconCaretDownFilled,
@@ -131,7 +132,7 @@ export const Message: FC<MessageProps> = ({
 
   const MODEL_DATA = [
     ...models.map(model => ({
-      modelId: model.model_id as LLMID,
+      modelId: model.model_id as string,
       modelName: model.name,
       provider: "custom" as ModelProvider,
       hostedId: model.id,

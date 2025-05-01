@@ -9,7 +9,7 @@ import { getMessagesByChatId } from "@/db/messages"
 import { getMessageImageFromStorage } from "@/db/storage/message-images"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import useHotkey from "@/lib/hooks/use-hotkey"
-import { LLMID, MessageImage } from "@/types"
+import { MessageImage } from "@/types"
 import { useParams } from "next/navigation"
 import { FC, useContext, useEffect, useState } from "react"
 import { ChatHelp } from "./chat-help"
@@ -172,7 +172,7 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
 
     setSelectedChat(chat)
     setChatSettings({
-      model: chat.model as LLMID,
+      model: chat.model as string,
       prompt: chat.prompt,
       temperature: chat.temperature,
       contextLength: chat.context_length,

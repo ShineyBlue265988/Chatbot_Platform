@@ -7,7 +7,8 @@ import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import { deleteMessagesIncludingAndAfter } from "@/db/messages"
 import { buildFinalMessages } from "@/lib/build-prompt"
 import { Tables } from "@/supabase/types"
-import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
+import { ChatMessage, ChatPayload } from "@/types"
+import { ModelProvider } from "@/types/models"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
@@ -21,7 +22,7 @@ import {
   processResponse,
   validateChatSettings
 } from "../chat-helpers"
-
+import { LLM } from "@/types"
 export const useChatHandler = () => {
   const router = useRouter()
 
@@ -101,7 +102,7 @@ export const useChatHandler = () => {
 
     if (selectedAssistant) {
       setChatSettings({
-        model: selectedAssistant.model as LLMID,
+        model: selectedAssistant.model as string,
         prompt: selectedAssistant.prompt,
         temperature: selectedAssistant.temperature,
         contextLength: selectedAssistant.context_length,
@@ -145,7 +146,7 @@ export const useChatHandler = () => {
       if (allFiles.length > 0) setShowFilesDisplay(true)
     } else if (selectedPreset) {
       setChatSettings({
-        model: selectedPreset.model as LLMID,
+        model: selectedPreset.model as string,
         prompt: selectedPreset.prompt,
         temperature: selectedPreset.temperature,
         contextLength: selectedPreset.context_length,
@@ -159,7 +160,7 @@ export const useChatHandler = () => {
     } else if (selectedWorkspace) {
       // setChatSettings({
       //   model: (selectedWorkspace.default_model ||
-      //     "gpt-4-1106-preview") as LLMID,
+      //     "gpt-4-1106-preview") as string,
       //   prompt:
       //     selectedWorkspace.default_prompt ||
       //     "You are a friendly, helpful AI assistant.",
@@ -207,7 +208,7 @@ export const useChatHandler = () => {
 
       const modelData = [
         ...models.map(model => ({
-          modelId: model.model_id as LLMID,
+          modelId: model.model_id as string,
           modelName: model.name,
           provider: "custom" as ModelProvider,
           hostedId: model.id,
@@ -217,8 +218,7 @@ export const useChatHandler = () => {
         ...LLM_LIST,
         ...availableLocalModels,
         ...availableOpenRouterModels
-      ].find(llm => llm.modelId === chatSettings?.model)
-
+      ].find(model => model.modelId === chatSettings?.model) as LLM | undefined
       validateChatSettings(
         chatSettings,
         modelData,

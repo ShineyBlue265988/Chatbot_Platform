@@ -4,7 +4,6 @@ import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import { Tables } from "@/supabase/types"
-import { LLMID } from "@/types"
 import { useContext } from "react"
 
 export const usePromptAndCommand = () => {
@@ -140,7 +139,7 @@ export const usePromptAndCommand = () => {
     setSelectedAssistant(assistant)
 
     setChatSettings({
-      model: assistant.model as LLMID,
+      model: assistant.model as string,
       prompt: assistant.prompt,
       temperature: assistant.temperature,
       contextLength: assistant.context_length,

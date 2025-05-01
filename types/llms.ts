@@ -1,5 +1,4 @@
-import { ModelProvider } from "."
-
+import { ModelProvider } from "./models"
 export type LLMID =
   | OpenAILLMID
   | GoogleLLMID

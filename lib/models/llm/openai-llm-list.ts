@@ -45,7 +45,8 @@ const GPT4Vision: LLM = {
   pricing: {
     currency: "USD",
     unit: "1M tokens",
-    inputCost: 10
+    inputCost: 10,
+    outputCost: 30
   }
 }
 

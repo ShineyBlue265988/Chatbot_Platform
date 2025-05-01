@@ -1,4 +1,4 @@
-import { LLMID } from "@/types"
+import { LLMID } from "@/types/llms"
 
 type ChatSettingLimits = {
   MIN_TEMPERATURE: number
@@ -7,7 +7,7 @@ type ChatSettingLimits = {
   MAX_CONTEXT_LENGTH: number
 }
 
-export const CHAT_SETTING_LIMITS: Record<LLMID, ChatSettingLimits> = {
+export const CHAT_SETTING_LIMITS: Record<string, ChatSettingLimits> = {
   // ANTHROPIC MODELS
   "claude-2.1": {
     MIN_TEMPERATURE: 0.0,
