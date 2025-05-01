@@ -287,6 +287,4 @@ Once deployed, you should be able to use your hosted instance of Chatbot UI via 
 
 We are working on a guide for contributing.
 
-## Contact
 
-Message Mckay on [Twitter/X](https://twitter.com/mckaywrigley)
