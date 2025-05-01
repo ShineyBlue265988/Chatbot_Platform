@@ -16,7 +16,7 @@ module.exports = {
       }
     },
     extend: {
-      borderColor: ({ theme }) => ({
+      borderColor: ({ theme }: { theme: (path: string, defaultValue?: string) => string }) => ({
         DEFAULT: theme('colors.border', '#e5e7eb') // Add this
       }),
       colors: {

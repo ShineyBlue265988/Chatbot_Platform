@@ -177,7 +177,7 @@ export const handleLocalChat = async (
   return await processResponse(
     response,
     isRegeneration
-      ? payload.messages[payload.messages.length - 1]
+      ? payload.chatMessages[payload.chatMessages.length - 1]
       : tempAssistantMessage,
     false,
     newAbortController,
@@ -186,7 +186,6 @@ export const handleLocalChat = async (
     setToolInUse
   )
 }
-
 export const handleHostedChat = async (
   payload: ChatPayload,
   profile: Tables<"profiles">,
@@ -239,7 +238,7 @@ export const handleHostedChat = async (
   return await processResponse(
     response,
     isRegeneration
-      ? payload.messages[payload.messages.length - 1]
+      ? payload.chatMessages[payload.chatMessages.length - 1]
       : tempAssistantChatMessage,
     true,
     newAbortController,
@@ -248,7 +247,6 @@ export const handleHostedChat = async (
     setToolInUse
   )
 }
-
 export const fetchChatResponse = async (
   url: string,
   body: object,

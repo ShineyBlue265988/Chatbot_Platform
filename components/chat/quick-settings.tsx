@@ -6,7 +6,6 @@ import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { Tables } from "@/supabase/types"
-import { LLMID } from "@/types"
 import { IconChevronDown, IconRobotFace } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useEffect, useRef, useState } from "react"
@@ -106,7 +105,7 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
       setSelectedTools([])
       if (selectedWorkspace) {
         setChatSettings({
-          model: selectedWorkspace.default_model as LLMID,
+          model: selectedWorkspace.default_model as string,
           prompt: selectedWorkspace.default_prompt,
           temperature: selectedWorkspace.default_temperature,
           contextLength: selectedWorkspace.default_context_length,
@@ -122,7 +121,7 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
     }
 
     setChatSettings({
-      model: item.model as LLMID,
+      model: item.model as string,
       prompt: item.prompt,
       temperature: item.temperature,
       contextLength: item.context_length,

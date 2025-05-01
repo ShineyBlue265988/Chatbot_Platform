@@ -20,9 +20,9 @@ import {
   ChatSettings,
   LLM,
   MessageImage,
-  OpenRouterLLM,
   WorkspaceImage
 } from "@/types"
+import { OpenRouterLLM } from "@/types/llms"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"

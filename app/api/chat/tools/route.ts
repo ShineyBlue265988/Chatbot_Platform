@@ -205,18 +205,7 @@ export async function POST(request: Request) {
       stream: true
     })
 
-    // Convert the OpenAI stream to a ReadableStream
-    const stream = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of secondResponse) {
-          const text = chunk.choices[0]?.delta?.content || ""
-          if (text) {
-            controller.enqueue(text)
-          }
-        }
-        controller.close()
-      }
-    })
+    const stream = OpenAIStream(secondResponse as any)
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {

@@ -1,8 +1,9 @@
 import { Tables } from "@/supabase/types"
-import { LLM, LLMID, OpenRouterLLM } from "@/types"
+import { LLM } from "@/types"
+import { OpenRouterLLM } from "@/types/llms"
 import { toast } from "sonner"
 import { LLM_LIST_MAP } from "./llm/llm-list"
-
+import { LLMID } from "@/types/llms"
 export const fetchHostedModels = async (profile: Tables<"profiles">) => {
   try {
     const providers = ["google", "anthropic", "mistral", "groq", "perplexity"]
@@ -65,7 +66,7 @@ export const fetchOllamaModels = async () => {
     const data = await response.json()
 
     const localModels: LLM[] = data.models.map((model: any) => ({
-      modelId: model.name as LLMID,
+      modelId: model.name as string,
       modelName: model.name,
       provider: "ollama",
       hostedId: model.name,
@@ -95,6 +96,7 @@ export const fetchOpenRouterModels = async () => {
         name: string
         context_length: number
       }): OpenRouterLLM => ({
+        //
         modelId: model.id as LLMID,
         modelName: model.id,
         provider: "openrouter",

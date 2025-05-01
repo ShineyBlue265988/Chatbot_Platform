@@ -9,71 +9,32 @@ import {
 } from "./llms"
 import { ModelProvider } from "./models"
 
-export * from "./models"
-export * from "./llms"
+export * from "./announcement"
+export * from "./assistant-retrieval-item"
+export * from "./chat"
+export * from "./chat-file"
+export * from "./chat-message"
+export * from "./collection-file"
+export * from "./content-type"
+export * from "./file-item-chunk"
+export * from "./images/assistant-image"
+export * from "./images/message-image"
+export * from "./images/workspace-image"
+export * from "./sharing"
+export * from "./sidebar-data"
 
-export interface ChatSettings {
-  model: LLMID
-  temperature: number
-  contextLength: number
-  includeProfileContext: boolean
-  includeWorkspaceInstructions: boolean
-  embeddingsProvider: "openai" | "local"
-  prompt: string
-}
-
-export interface ChatMessage {
-  message: {
-    chat_id: string
-    assistant_id: string | null
-    content: string
-    created_at: string
-    id: string
-    image_paths: string[]
-    model: string
-    role: string
-    sequence_number: number
-    updated_at: string | null
-    user_id: string
+export interface LLM {
+  modelId: string
+  modelName: string
+  provider: ModelProvider
+  hostedId: string
+  platformLink: string
+  imageInput: boolean
+  maxContext?: number
+  pricing?: {
+    currency: string
+    unit: string
+    inputCost: number
+    outputCost: number
   }
-  fileItems: string[]
-}
-
-export interface ChatPayload {
-  messages: ChatMessage[]
-  chatSettings: ChatSettings
-  selectedTools?: any[]
-}
-
-// Add the FileItemChunk interface
-export interface FileItemChunk {
-  id?: string
-  fileId: string
-  content: string
-  tokens: number
-  embedding?: number[]
-  metadata?: Record<string, any>
-}
-
-// Add the ChatFile interface if needed
-export interface ChatFile {
-  id: string
-  name: string
-  type: string
-  size?: number
-  url?: string
-  filepath?: string
-  content?: string
-  messageId?: string
-}
-
-// Add the MessageImage interface if needed
-export interface MessageImage {
-  id: string
-  url: string
-  messageId: string
-  width?: number
-  height?: number
-  base64?: string
-  file?: File | null
 }
