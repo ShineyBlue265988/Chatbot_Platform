@@ -6,7 +6,8 @@ import { ChatbotUIContext } from "@/context/context"
 import { FILE_DESCRIPTION_MAX, FILE_NAME_MAX } from "@/db/limits"
 import { TablesInsert } from "@/supabase/types"
 import { FC, useContext, useState } from "react"
-
+import "@googleworkspace/drive-picker-element"
+import GooglePicker from "./GooglePicker"
 interface CreateFileProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
@@ -27,6 +28,12 @@ export const CreateFile: FC<CreateFileProps> = ({ isOpen, onOpenChange }) => {
 
     if (!file) return
 
+    setSelectedFile(file)
+    const fileNameWithoutExtension = file.name.split(".").slice(0, -1).join(".")
+    setName(fileNameWithoutExtension)
+  }
+  // Add this handler for Google Drive files
+  const handleGoogleDriveFile = (file: File) => {
     setSelectedFile(file)
     const fileNameWithoutExtension = file.name.split(".").slice(0, -1).join(".")
     setName(fileNameWithoutExtension)
@@ -57,7 +64,11 @@ export const CreateFile: FC<CreateFileProps> = ({ isOpen, onOpenChange }) => {
         <>
           <div className="space-y-1">
             <Label>File</Label>
-
+            {/* <drive-picker client-id="336247810256-7uveqa8vsl10cm5ht8nfajrueh87qb4v.apps.googleusercontent.com" app-id="lively-tensor-433218-f6">
+              <drive-picker-docs-view starred="true"></drive-picker-docs-view>
+            </drive-picker> */}
+            <GooglePicker onFileSelect={handleGoogleDriveFile} />
+            <div className="text-muted-foreground text-xs">or</div>
             <Input
               type="file"
               onChange={handleSelectedFile}
