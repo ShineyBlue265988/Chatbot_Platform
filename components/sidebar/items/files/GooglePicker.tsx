@@ -9,6 +9,17 @@ interface GooglePickerProps {
   onFileSelect: (file: File) => void
 }
 
+interface PickerData {
+  action: string
+  docs?: Array<{
+    id: string
+    name: string
+    mimeType: string
+    // Add other properties that might be in the docs objects
+  }>
+  // Add other properties that might be in the data object
+}
+
 const GooglePicker: FC<GooglePickerProps> = ({ onFileSelect }) => {
   const [openPicker] = useDrivePicker()
 
@@ -32,7 +43,7 @@ const GooglePicker: FC<GooglePickerProps> = ({ onFileSelect }) => {
             showUploadFolders: true,
             supportDrives: true,
             multiselect: false, // Set to false to simplify handling
-            callbackFunction: data => {
+            callbackFunction: (data: PickerData) => {
               const elements = Array.from(
                 document.getElementsByClassName(
                   "picker-dialog"
