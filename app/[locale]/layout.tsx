@@ -4,7 +4,7 @@ import { Providers } from "@/components/utility/providers"
 import TranslationsProvider from "@/components/utility/translations-provider"
 import initTranslations from "@/lib/i18n"
 import { Database } from "@/supabase/types"
-import { headers } from "next/headers"
+import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
 import { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
@@ -70,7 +70,7 @@ export default async function RootLayout({
   children,
   params: { locale }
 }: RootLayoutProps) {
-  const headersList = headers()
+  const cookieStore = cookies()
   
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -78,7 +78,7 @@ export default async function RootLayout({
     {
       cookies: {
         get(name: string) {
-          return headersList.get('cookie')?.split(';').find(c => c.trim().startsWith(`${name}=`))?.split('=')[1]
+          return cookieStore.get(name)?.value
         }
       }
     }
