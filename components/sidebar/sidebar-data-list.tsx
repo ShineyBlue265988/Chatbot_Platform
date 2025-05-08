@@ -26,12 +26,39 @@ interface SidebarDataListProps {
   contentType: ContentType
   data: DataListType
   folders: Tables<"folders">[]
+  multiSelectMode?: boolean
+  selectedItems?: string[]
+  setSelectedItems?: (ids: string[]) => void
+  selectedSort: string
+}
+
+function sortData(data: any[], sort: string) {
+  if (sort === "name-asc") {
+    return [...data].sort((a, b) => a.name.localeCompare(b.name))
+  } else if (sort === "name-desc") {
+    return [...data].sort((a, b) => b.name.localeCompare(a.name))
+  } else if (sort === "oldest") {
+    return [...data].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+  } else if (sort === "newest") {
+    return [...data].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+  }
+  return data
 }
 
 export const SidebarDataList: FC<SidebarDataListProps> = ({
   contentType,
   data,
-  folders
+  folders,
+  multiSelectMode = false,
+  selectedItems = [],
+  setSelectedItems = () => {},
+  selectedSort
 }) => {
   const {
     setChats,
@@ -206,6 +233,27 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     setIsDragOver(false)
   }
 
+  const handleSelectItem = (id: string) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(selectedItems.filter(itemId => itemId !== id))
+    } else {
+      setSelectedItems([...selectedItems, id])
+    }
+  }
+
+  const renderItemWithCheckbox = (item: any) => (
+    <div key={item.id} className="flex items-center gap-2">
+      {multiSelectMode && (
+        <input
+          type="checkbox"
+          checked={selectedItems.includes(item.id)}
+          onChange={() => handleSelectItem(item.id)}
+        />
+      )}
+      {getDataListComponent(contentType, item)}
+    </div>
+  )
+
   useEffect(() => {
     if (divRef.current) {
       setIsOverflowing(
@@ -245,17 +293,20 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                 onUpdateFolder={updateFolder}
                 contentType={contentType}
               >
-                {dataWithFolders
-                  .filter(item => item.folder_id === folder.id)
-                  .map(item => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, item.id)}
-                    >
-                      {getDataListComponent(contentType, item)}
-                    </div>
-                  ))}
+                {sortData(
+                  dataWithFolders.filter(
+                    (item: any) => item.folder_id === folder.id
+                  ),
+                  selectedSort
+                ).map((item: any) => (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={e => handleDragStart(e, item.id)}
+                  >
+                    {renderItemWithCheckbox(item)}
+                  </div>
+                ))}
               </Folder>
             ))}
 
@@ -291,15 +342,17 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                             onDragLeave={handleDragLeave}
                             onDragOver={handleDragOver}
                           >
-                            {sortedData.map((item: any) => (
-                              <div
-                                key={item.id}
-                                draggable
-                                onDragStart={e => handleDragStart(e, item.id)}
-                              >
-                                {getDataListComponent(contentType, item)}
-                              </div>
-                            ))}
+                            {sortData(sortedData, selectedSort || "newest").map(
+                              (item: any) => (
+                                <div
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={e => handleDragStart(e, item.id)}
+                                >
+                                  {renderItemWithCheckbox(item)}
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
                       )
@@ -315,14 +368,14 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
               >
-                {dataWithoutFolders.map(item => {
+                {sortData(dataWithoutFolders, selectedSort).map((item: any) => {
                   return (
                     <div
                       key={item.id}
                       draggable
                       onDragStart={e => handleDragStart(e, item.id)}
                     >
-                      {getDataListComponent(contentType, item)}
+                      {renderItemWithCheckbox(item)}
                     </div>
                   )
                 })}
