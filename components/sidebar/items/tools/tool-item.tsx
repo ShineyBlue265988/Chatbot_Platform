@@ -7,6 +7,7 @@ import { Tables } from "@/supabase/types"
 import { IconBolt } from "@tabler/icons-react"
 import { FC, useState } from "react"
 import { SidebarItem } from "../all/sidebar-display-item"
+import { Checkbox } from "@radix-ui/react-checkbox"
 
 interface ToolItemProps {
   tool: Tables<"tools">
@@ -60,7 +61,7 @@ export const ToolItem: FC<ToolItemProps> = ({ tool }) => {
             />
           </div>
 
-          {/* <div className="space-y-1">
+          <div className="space-y-1">
             <Label>URL</Label>
 
             <Input
@@ -68,27 +69,27 @@ export const ToolItem: FC<ToolItemProps> = ({ tool }) => {
               value={url}
               onChange={e => setUrl(e.target.value)}
             />
-          </div> */}
+          </div>
 
-          {/* <div className="space-y-3 pt-4 pb-3">
-            <div className="space-x-2 flex items-center">
+          <div className="space-y-3 pb-3 pt-4">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Web Browsing</Label>
             </div>
 
-            <div className="space-x-2 flex items-center">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Image Generation</Label>
             </div>
 
-            <div className="space-x-2 flex items-center">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Code Interpreter</Label>
             </div>
-          </div> */}
+          </div>
 
           <div className="space-y-1">
             <Label>Custom Headers</Label>

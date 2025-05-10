@@ -188,7 +188,7 @@ export async function POST(request: Request) {
             data = await response.json()
           }
         }
-
+        console.log("data--------------------->", data)
         messages.push({
           tool_call_id: toolCall.id,
           role: "tool",
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
 
     const secondResponse = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages: [...messages, ...toolCalls],
+      messages,
       temperature: chatSettings.temperature,
       stream: true
     })

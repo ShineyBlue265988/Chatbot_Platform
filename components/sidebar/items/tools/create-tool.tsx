@@ -6,6 +6,7 @@ import { ChatbotUIContext } from "@/context/context"
 import { TOOL_DESCRIPTION_MAX, TOOL_NAME_MAX } from "@/db/limits"
 import { validateOpenAPI } from "@/lib/openapi-conversion"
 import { TablesInsert } from "@/supabase/types"
+import { Checkbox } from "@radix-ui/react-checkbox"
 import { FC, useContext, useState } from "react"
 
 interface CreateToolProps {
@@ -65,7 +66,7 @@ export const CreateTool: FC<CreateToolProps> = ({ isOpen, onOpenChange }) => {
             />
           </div>
 
-          {/* <div className="space-y-1">
+          <div className="space-y-1">
             <Label>URL</Label>
 
             <Input
@@ -73,27 +74,27 @@ export const CreateTool: FC<CreateToolProps> = ({ isOpen, onOpenChange }) => {
               value={url}
               onChange={e => setUrl(e.target.value)}
             />
-          </div> */}
+          </div>
 
-          {/* <div className="space-y-3 pt-4 pb-3">
-            <div className="space-x-2 flex items-center">
+          <div className="space-y-3 pb-3 pt-4">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Web Browsing</Label>
             </div>
 
-            <div className="space-x-2 flex items-center">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Image Generation</Label>
             </div>
 
-            <div className="space-x-2 flex items-center">
+            <div className="flex items-center space-x-2">
               <Checkbox />
 
               <Label>Code Interpreter</Label>
             </div>
-          </div> */}
+          </div>
 
           <div className="space-y-1">
             <Label>Custom Headers</Label>
