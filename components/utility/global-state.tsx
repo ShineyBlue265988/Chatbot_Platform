@@ -5,7 +5,11 @@
 import { ChatbotUIContext } from "@/context/context"
 import { getProfileByUserId } from "@/db/profile"
 import { getWorkspaceImageFromStorage } from "@/db/storage/workspace-images"
-import { getWorkspacesByUserId } from "@/db/workspaces"
+import {
+  getWorkspacesByUserId,
+  getTeamIdsByUserId,
+  getWorkspacesByTeamIds
+} from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import {
   fetchHostedModels,
@@ -123,6 +127,11 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [selectedTools, setSelectedTools] = useState<Tables<"tools">[]>([])
   const [toolInUse, setToolInUse] = useState<string>("none")
 
+  // Add this inside the component:
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
+    null
+  )
+
   useEffect(() => {
     ;(async () => {
       const profile = await fetchStartingData()
@@ -164,8 +173,14 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       if (!profile.has_onboarded) {
         return router.push("/setup")
       }
-
-      const workspaces = await getWorkspacesByUserId(user.id)
+      const teamIds = await getTeamIdsByUserId(user.id)
+      console.log("teamIds=============>", teamIds)
+      const teamWorkspaces = await getWorkspacesByTeamIds(teamIds)
+      console.log("teamWorkspaces=============>", teamWorkspaces)
+      const privateWorkspaces = await getWorkspacesByUserId(user.id)
+      console.log("privateWorkspaces=============>", privateWorkspaces)
+      const workspaces = [...teamWorkspaces, ...privateWorkspaces]
+      console.log("workspaces=============>", workspaces)
       setWorkspaces(workspaces)
 
       for (const workspace of workspaces) {
@@ -203,7 +218,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // PROFILE STORE
         profile,
         setProfile,
-
+        activeWorkspaceId,
+        setActiveWorkspaceId,
         // ITEMS STORE
         assistants,
         setAssistants,

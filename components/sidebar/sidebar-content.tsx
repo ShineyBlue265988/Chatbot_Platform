@@ -190,7 +190,10 @@ export const SidebarContent: FC<SidebarContentProps> = ({
       await deleteFn(item.id, item)
     }
     setSelectedItems([])
-    const setStateFunction = stateUpdateFunctions[contentType]
+    const setStateFunction =
+      contentType === "teams"
+        ? undefined
+        : stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
     if (setStateFunction) {
       setStateFunction((prev: any[]) =>
         prev.filter(item => !selectedItems.includes(item.id))
@@ -242,7 +245,10 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     } else {
       toast.success("Items moved successfully!")
     }
-    const setStateFunction = stateUpdateFunctions[contentType]
+    const setStateFunction =
+      contentType === "teams"
+        ? undefined
+        : stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
     if (setStateFunction) {
       setStateFunction((prev: any[]) =>
         prev.map(item =>
@@ -347,7 +353,10 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     } else {
       toast.success("Items archived successfully!")
     }
-    const setStateFunction = stateUpdateFunctions[contentType]
+    const setStateFunction =
+      contentType === "teams"
+        ? undefined
+        : stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
     if (setStateFunction) {
       setStateFunction((prev: any[]) =>
         prev.map(item =>
@@ -394,7 +403,10 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     } else {
       toast.success("Items unarchived successfully!")
     }
-    const setStateFunction = stateUpdateFunctions[contentType]
+    const setStateFunction =
+      contentType === "teams"
+        ? undefined
+        : stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
     if (setStateFunction) {
       setStateFunction((prev: any[]) =>
         prev.map(item =>

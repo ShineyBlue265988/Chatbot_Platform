@@ -60,7 +60,9 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
 
     setShowFolderDialog(false)
 
-    const setStateFunction = stateUpdateFunctions[contentType]
+    if (contentType === "teams") return
+    const setStateFunction =
+      stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
 
     if (!setStateFunction) return
 
@@ -79,7 +81,9 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
   }
 
   const handleDeleteFolderAndItems = async () => {
-    const setStateFunction = stateUpdateFunctions[contentType]
+    if (contentType === "teams") return
+    const setStateFunction =
+      stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
 
     if (!setStateFunction) return
 

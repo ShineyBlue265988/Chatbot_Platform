@@ -11,6 +11,9 @@ import { useParams, useRouter } from "next/navigation"
 import { FC, useContext, useRef } from "react"
 import { DeleteChat } from "./delete-chat"
 import { UpdateChat } from "./update-chat"
+import React, { useEffect, useState } from "react"
+import { getTeamChats, getChatMessages } from "@/db/team-chats" // see above
+import { supabase } from "@/lib/supabase/browser-client"
 
 interface ChatItemProps {
   chat: Tables<"chats">
@@ -24,6 +27,12 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
     assistantImages,
     availableOpenRouterModels
   } = useContext(ChatbotUIContext)
+
+  const [chats, setChats] = useState<any[]>([])
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<any[]>([])
+  const [loadingChats, setLoadingChats] = useState(false)
+  const [loadingMessages, setLoadingMessages] = useState(false)
 
   const router = useRouter()
   const params = useParams()

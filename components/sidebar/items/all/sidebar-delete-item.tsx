@@ -89,6 +89,7 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   }
 
   const handleDelete = async () => {
+    if (contentType === "teams") return // Prevent handling teams here
     const deleteFunction = deleteFunctions[contentType]
     const setStateFunction = stateUpdateFunctions[contentType]
 

@@ -7,6 +7,7 @@ import { TabsContent } from "../ui/tabs"
 import { WorkspaceSwitcher } from "../utility/workspace-switcher"
 import { WorkspaceSettings } from "../workspace/workspace-settings"
 import { SidebarContent } from "./sidebar-content"
+import TeamList from "@/components/sidebar/items/teams/TeamList"
 
 interface SidebarProps {
   contentType: ContentType
@@ -100,6 +101,9 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
 
             case "models":
               return renderSidebarContent("models", models, modelFolders)
+
+            case "teams":
+              return <TeamList />
 
             default:
               return null

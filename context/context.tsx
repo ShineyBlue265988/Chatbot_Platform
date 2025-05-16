@@ -136,6 +136,10 @@ interface ChatbotUIContext {
   setSelectedTools: Dispatch<SetStateAction<Tables<"tools">[]>>
   toolInUse: string
   setToolInUse: Dispatch<SetStateAction<string>>
+
+  // NEW PROPERTY
+  activeWorkspaceId: string | null
+  setActiveWorkspaceId: Dispatch<SetStateAction<string | null>>
 }
 
 export const ChatbotUIContext = createContext<ChatbotUIContext>({
@@ -261,5 +265,9 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   selectedTools: [],
   setSelectedTools: () => {},
   toolInUse: "none",
-  setToolInUse: () => {}
+  setToolInUse: () => {},
+
+  // NEW PROPERTY
+  activeWorkspaceId: null,
+  setActiveWorkspaceId: () => {}
 })

@@ -185,9 +185,11 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     const item: any = data.find(item => item.id === itemId)
 
     if (!item) return null
-
-    const updateFunction = updateFunctions[contentType]
-    const setStateFunction = stateUpdateFunctions[contentType]
+    if (contentType === "teams") return null
+    type UpdatableContentType = Exclude<ContentType, "teams">
+    const updateFunction = updateFunctions[contentType as UpdatableContentType]
+    const setStateFunction =
+      stateUpdateFunctions[contentType as UpdatableContentType]
 
     if (!updateFunction || !setStateFunction) return
 

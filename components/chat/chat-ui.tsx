@@ -19,7 +19,8 @@ import { ChatMessages } from "./chat-messages"
 import { ChatScrollButtons } from "./chat-scroll-buttons"
 import { ChatSecondaryButtons } from "./chat-secondary-buttons"
 import { ChatSettingsButton } from "./chat-settings"
-
+import { supabase } from "@/lib/supabase/browser-client"
+import { Tables } from "@/supabase/types"
 interface ChatUIProps {}
 
 export const ChatUI: FC<ChatUIProps> = ({}) => {
@@ -77,6 +78,50 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     }
   }, [params.chatid])
 
+  useEffect(() => {
+    console.log("params.chatid=============>", params.chatid)
+    if (!params.chatid) return
+    // setLoadingMessages(true)
+    // --- Real-time subscription for new messages ---
+    const messageChannel = supabase
+      .channel("messages_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `chat_id=eq.${params.chatid}`
+        },
+        async payload => {
+          // Fetch file items for the new message
+          const newMessage = payload.new as Tables<"messages">
+          const messageFileItems = await getMessageFileItemsByMessageId(
+            newMessage.id
+          )
+
+          setChatMessages(prev => {
+            // Prevent duplicates
+            if (prev.some(m => m.message.id === newMessage.id)) return prev
+            return [
+              ...prev,
+              {
+                message: newMessage,
+                fileItems: messageFileItems.file_items.map(
+                  fileItem => fileItem.id
+                )
+              }
+            ]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      // supabase.removeChannel(messageChannel)
+      messageChannel.unsubscribe()
+    }
+  }, [params.chatid, setChatMessages])
   const fetchMessages = async () => {
     const fetchedMessages = await getMessagesByChatId(params.chatid as string)
 

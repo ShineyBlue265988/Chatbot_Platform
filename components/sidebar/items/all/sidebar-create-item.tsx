@@ -188,6 +188,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     try {
       if (!selectedWorkspace) return
       if (isTyping) return // Prevent creation while typing
+      if (contentType === "teams") return // Prevent handling teams here
 
       const createFunction = createFunctions[contentType]
       const setStateFunction = stateUpdateFunctions[contentType]

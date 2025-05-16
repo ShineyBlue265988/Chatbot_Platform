@@ -23,11 +23,27 @@ export const getWorkspaceById = async (workspaceId: string) => {
     .eq("id", workspaceId)
     .single()
 
+  if (error) {
+    throw new Error(error.message || "Workspace not found")
+  }
   if (!workspace) {
+    throw new Error("Workspace not found")
+  }
+  return workspace
+}
+
+export const getTeamIdsByUserId = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("team_id")
+    .eq("user_id", userId)
+
+  if (error) {
     throw new Error(error.message)
   }
 
-  return workspace
+  // Return an array of team IDs
+  return (data ?? []).map(row => row.team_id)
 }
 
 export const getWorkspacesByUserId = async (userId: string) => {
@@ -42,6 +58,21 @@ export const getWorkspacesByUserId = async (userId: string) => {
   }
 
   return workspaces
+}
+
+export const getWorkspacesByTeamIds = async (teamIds: string[]) => {
+  if (!teamIds.length) return []
+
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select("*")
+    .in("team_id", teamIds)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data ?? []
 }
 
 export const createWorkspace = async (

@@ -7,7 +7,8 @@ import {
   IconMessage,
   IconPencil,
   IconRobotFace,
-  IconSparkles
+  IconSparkles,
+  IconUsers
 } from "@tabler/icons-react"
 import { FC } from "react"
 import { TabsList } from "../ui/tabs"
@@ -26,7 +27,13 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
 }) => {
   return (
     <div className="flex flex-col justify-between border-r-2 pb-5">
-      <TabsList className="bg-background grid h-[440px] grid-rows-7">
+      <TabsList className="bg-background grid h-[500px] grid-rows-8">
+        <SidebarSwitchItem
+          icon={<IconUsers size={SIDEBAR_ICON_SIZE} />}
+          contentType="teams"
+          onContentTypeChange={onContentTypeChange}
+        />
+
         <SidebarSwitchItem
           icon={<IconMessage size={SIDEBAR_ICON_SIZE} />}
           contentType="chats"

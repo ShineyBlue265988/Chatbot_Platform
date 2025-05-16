@@ -71,7 +71,7 @@ export default async function RootLayout({
   params: { locale }
 }: RootLayoutProps) {
   const { t, resources } = await initTranslations(locale, i18nNamespaces)
-  
+
   const cookieStore = cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,18 +80,15 @@ export default async function RootLayout({
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, "", options)
         }
+        // Do NOT provide set or remove here. Cookies can only be set in Server Actions or Route Handlers.
       }
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
 
   return (
     <html lang="en" suppressHydrationWarning>
