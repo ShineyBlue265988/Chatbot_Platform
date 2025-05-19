@@ -2,20 +2,14 @@ import React, { useContext, useEffect, useState } from "react"
 import { ChatbotUIContext } from "@/context/context"
 import { supabase } from "@/lib/supabase/browser-client"
 import { Tables } from "@/supabase/types"
-import TeamCreateModal from "./TeamCreateModal"
-import TeamWorkspaceList from "./TeamWorkspaceList"
-import TeamInviteModal from "./TeamInviteModal"
-import TeamInvitesList from "./TeamInvitesList"
-import TeamMembersList from "./TeamMembersList"
 
 const TeamList = () => {
-  const { profile } = useContext(ChatbotUIContext)
+  const { profile, selectedTeamId, setSelectedTeamId } =
+    useContext(ChatbotUIContext)
   const [teams, setTeams] = useState<Tables<"teams">[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showInviteModal, setShowInviteModal] = useState(false)
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
 
   const fetchTeams = async () => {
     if (!profile?.user_id) return
@@ -47,7 +41,6 @@ const TeamList = () => {
 
   return (
     <div>
-      <TeamInvitesList />
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-bold">Teams</h3>
         <button
@@ -71,37 +64,8 @@ const TeamList = () => {
           </li>
         ))}
       </ul>
-      {selectedTeamId && (
-        <>
-          <TeamMembersList
-            teamId={selectedTeamId}
-            currentUserId={profile.user_id}
-          />
-          <div>
-            <button
-              className="my-2 rounded bg-black px-2 py-1 text-white dark:bg-white dark:text-black"
-              onClick={() => setShowInviteModal(true)}
-            >
-              + Invite Member
-            </button>
-            <TeamInviteModal
-              open={showInviteModal}
-              onClose={() => setShowInviteModal(false)}
-              teamId={selectedTeamId}
-              invitedBy={profile.user_id}
-            />
-          </div>
-          <TeamWorkspaceList teamId={selectedTeamId} />
-        </>
-      )}
-
       {showCreateModal && (
-        <TeamCreateModal
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          userId={profile.user_id}
-          onTeamCreated={fetchTeams}
-        />
+        <div>{/* Place your TeamCreateModal here if needed */}</div>
       )}
     </div>
   )

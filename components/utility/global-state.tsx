@@ -80,7 +80,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   // PASSIVE CHAT STORE
   const [userInput, setUserInput] = useState<string>("")
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [chatSettings, setChatSettings] = useState<ChatSettings>({
+  const [chatSettings, setChatSettings] = useState<ChatSettings | null>({
     model: "gpt-4-turbo-preview",
     prompt: "You are a helpful AI assistant.",
     temperature: 0.5,
@@ -131,6 +131,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
     null
   )
+
+  // NEW PROPERTY
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -338,7 +341,11 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         selectedTools,
         setSelectedTools,
         toolInUse,
-        setToolInUse
+        setToolInUse,
+
+        // NEW PROPERTY
+        selectedTeamId,
+        setSelectedTeamId
       }}
     >
       {children}

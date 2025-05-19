@@ -8,6 +8,9 @@ import { WorkspaceSwitcher } from "../utility/workspace-switcher"
 import { WorkspaceSettings } from "../workspace/workspace-settings"
 import { SidebarContent } from "./sidebar-content"
 import TeamList from "@/components/sidebar/items/teams/TeamList"
+import RolesPermissions from "@/components/sidebar/items/roles/RolesPermissions"
+import UsersAnalytics from "@/components/sidebar/items/users/UsersAnalytics"
+import UsageLimits from "@/components/sidebar/items/usage/UsageLimits"
 
 interface SidebarProps {
   contentType: ContentType
@@ -104,6 +107,15 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
 
             case "teams":
               return <TeamList />
+
+            case "roles":
+              return <RolesPermissions />
+
+            case "users-analytics":
+              return <UsersAnalytics />
+
+            case "usage-limits":
+              return <UsageLimits />
 
             default:
               return null

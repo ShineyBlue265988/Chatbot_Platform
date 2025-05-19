@@ -8,3 +8,6 @@ export type ContentType =
   | "tools"
   | "models"
   | "teams"
+  | "roles"
+  | "users-analytics"
+  | "usage-limits"
