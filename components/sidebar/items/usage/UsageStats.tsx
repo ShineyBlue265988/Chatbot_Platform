@@ -154,7 +154,7 @@ export function UsageStats({ userId }: UsageStatsProps) {
         <div>
           <BarChart
             data={stats.recentUsage}
-            userId={userId}
+            // userId={userId}
             onLimitReached={handleLimitReached}
           />
         </div>
