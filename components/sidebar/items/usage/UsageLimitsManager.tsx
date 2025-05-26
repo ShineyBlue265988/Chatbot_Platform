@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { LLM_LIST_MAP } from "@/lib/models/llm/llm-list"
+import { ChatbotUIContext } from "@/context/context"
 
 const AVAILABLE_PROVIDERS = [
   { value: "openai", label: "OpenAI" },
@@ -33,7 +34,7 @@ const AVAILABLE_PROVIDERS = [
 ]
 
 const limitSchema = z.object({
-  type: z.enum(["model", "user", "agent", "provider"]),
+  type: z.enum(["model", "daily", "agent", "provider"]),
   target: z.string().min(1, "Target is required"),
   usage_limit: z.number().min(1000, "Limit must be at least 1000 tokens")
 })
@@ -41,6 +42,7 @@ const limitSchema = z.object({
 type LimitFormValues = z.infer<typeof limitSchema>
 
 export function UsageLimitsManager() {
+  const { profile } = useContext(ChatbotUIContext)
   const [limits, setLimits] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -65,6 +67,13 @@ export function UsageLimitsManager() {
   useEffect(() => {
     fetchLimits()
   }, [])
+
+  // Auto-select current user when type changes to "daily"
+  useEffect(() => {
+    if (form.watch("type") === "daily" && profile?.user_id) {
+      form.setValue("target", profile.user_id)
+    }
+  }, [form.watch("type"), profile?.user_id])
 
   const fetchLimits = async () => {
     try {
@@ -151,7 +160,7 @@ export function UsageLimitsManager() {
                       <SelectItem value="provider">
                         Provider-specific
                       </SelectItem>
-                      <SelectItem value="user">User-specific</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
                       <SelectItem value="agent">Agent-specific</SelectItem>
                     </SelectContent>
                   </Select>
@@ -206,6 +215,15 @@ export function UsageLimitsManager() {
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : form.watch("type") === "daily" ? (
+                      <div className="bg-muted flex items-center space-x-2 rounded-md border px-3 py-2">
+                        <span className="text-sm">
+                          {profile?.display_name ||
+                            profile?.username ||
+                            "Current User"}
+                        </span>
+                        <span className="text-muted-foreground text-xs"></span>
+                      </div>
                     ) : (
                       <Input
                         placeholder={`Enter ${form.watch("type")} identifier`}
@@ -215,7 +233,8 @@ export function UsageLimitsManager() {
                     )}
                   </FormControl>
                   <FormDescription>
-                    {form.watch("type") === "user" && "Enter the user ID"}
+                    {form.watch("type") === "daily" &&
+                      "This limit will apply to your account only"}
                     {form.watch("type") === "agent" && "Enter the agent ID"}
                   </FormDescription>
                   <FormMessage />
@@ -273,7 +292,10 @@ export function UsageLimitsManager() {
                     Limit
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    Target: {limit.target}
+                    Target:{" "}
+                    {limit.type === "daily" && limit.target === profile?.user_id
+                      ? `${profile?.display_name || profile?.username || "You"} (Self)`
+                      : limit.target}
                   </div>
                   <div className="text-sm">
                     {limit.usage_limit.toLocaleString()} tokens

@@ -11,6 +11,8 @@ import {
 } from "chart.js"
 import { useTheme } from "next-themes"
 import { supabase } from "@/lib/supabase/browser-client"
+import { useContext } from "react"
+import { ChatbotUIContext } from "@/context/context"
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
@@ -43,7 +45,6 @@ interface ProviderUsageData {
 
 interface BarChartProps {
   data?: RecentUsageData[] | DailyUsageData[]
-  userId?: string
   agentId?: string
   ModelProvider?: string
   onLimitReached?: (isReached: boolean) => void
@@ -60,11 +61,14 @@ interface DailyLimitAlert {
 
 const BarChart: React.FC<BarChartProps> = ({
   data,
-  userId,
   agentId,
   ModelProvider,
   onLimitReached
 }) => {
+  // Get current user from context
+  const { profile } = useContext(ChatbotUIContext)
+  const currentUserId = profile?.user_id
+
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -94,7 +98,8 @@ const BarChart: React.FC<BarChartProps> = ({
   }, [])
 
   const fetchDailyUsage = useCallback(async () => {
-    if (!userId) {
+    if (!currentUserId) {
+      console.log("⚠️ No user logged in, showing mock data")
       prepareMockData()
       return
     }
@@ -102,7 +107,10 @@ const BarChart: React.FC<BarChartProps> = ({
     try {
       setIsLoading(true)
       setError(null)
-      console.log("📡 Fetching daily usage data for last 7 days...")
+      console.log(
+        "📡 Fetching daily usage data for current user:",
+        currentUserId
+      )
 
       const dailyData = []
       const today = new Date()
@@ -123,7 +131,7 @@ const BarChart: React.FC<BarChartProps> = ({
         const { data: usageData, error: usageError } = await supabase
           .from("token_usage")
           .select("*")
-          .eq("user_id", userId)
+          .eq("user_id", currentUserId)
           .gte("created_at", startOfDay.toISOString())
           .lt("created_at", endOfDay.toISOString())
 
@@ -160,10 +168,11 @@ const BarChart: React.FC<BarChartProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [userId])
+  }, [currentUserId])
 
   const fetchProviderUsage = useCallback(async () => {
-    if (!userId) {
+    if (!currentUserId) {
+      console.log("⚠️ No user logged in, showing mock data")
       prepareMockProviderData()
       return
     }
@@ -171,7 +180,10 @@ const BarChart: React.FC<BarChartProps> = ({
     try {
       setIsLoading(true)
       setError(null)
-      console.log("📡 Fetching provider usage data...")
+      console.log(
+        "📡 Fetching provider usage data for current user:",
+        currentUserId
+      )
 
       // Get current month's date range
       const now = new Date()
@@ -180,7 +192,7 @@ const BarChart: React.FC<BarChartProps> = ({
       const { data: usageData, error: usageError } = await supabase
         .from("token_usage")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", currentUserId)
         .gte("created_at", startOfMonth.toISOString())
 
       if (usageError) {
@@ -214,13 +226,16 @@ const BarChart: React.FC<BarChartProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [userId]) // Only userId as dependency
+  }, [currentUserId])
 
   const checkDailyLimits = useCallback(async () => {
-    if (!userId) return
+    if (!currentUserId) {
+      console.log("⚠️ No user logged in, cannot check limits")
+      return
+    }
 
     try {
-      console.log("🔍 Checking daily limits for user:", userId)
+      console.log("🔍 Checking daily limits for current user:", currentUserId)
 
       // Get today's date range
       const now = new Date()
@@ -236,7 +251,7 @@ const BarChart: React.FC<BarChartProps> = ({
       const { data: usageData, error: usageError } = await supabase
         .from("token_usage")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", currentUserId)
         .gte("created_at", startOfDay.toISOString())
         .lt("created_at", endOfDay.toISOString())
 
@@ -249,9 +264,9 @@ const BarChart: React.FC<BarChartProps> = ({
       const { data: limits, error: limitsError } = await supabase
         .from("usage_limits")
         .select("*")
-        .eq("type", "user")
-        .eq("target", userId)
-
+        .eq("type", "daily")
+        .eq("target", currentUserId)
+      console.log("🔍 Fetched limits:---------------?", limits)
       if (limitsError) {
         console.error("❌ Error fetching limits:", limitsError)
         return
@@ -318,47 +333,36 @@ const BarChart: React.FC<BarChartProps> = ({
     } catch (error) {
       console.error("💥 Error checking daily limits:", error)
     }
-  }, [userId, onLimitReached])
+  }, [currentUserId, onLimitReached])
 
-  // FIXED: Update the useEffect hooks to use the memoized functions
+  // Update useEffect hooks to use currentUserId instead of userId
   useEffect(() => {
-    if (userId && mounted) {
+    if (currentUserId && mounted) {
       if (viewType === "daily") {
         fetchDailyUsage()
       } else if (viewType === "provider") {
         fetchProviderUsage()
       }
+    } else if (mounted) {
+      // Show mock data when no user is logged in
+      if (viewType === "daily") {
+        prepareMockData()
+      } else {
+        prepareMockProviderData()
+      }
     }
-  }, [viewType, userId, mounted, fetchDailyUsage, fetchProviderUsage])
+  }, [viewType, currentUserId, mounted, fetchDailyUsage, fetchProviderUsage])
 
-  // FIXED: Update this useEffect to use the memoized function
+  // Check daily limits when component mounts or currentUserId changes
   useEffect(() => {
-    if (userId && mounted) {
+    if (currentUserId && mounted) {
       checkDailyLimits()
     }
-  }, [userId, mounted, checkDailyLimits])
-
-  // Fetch data when view type changes
-  useEffect(() => {
-    if (userId && mounted) {
-      if (viewType === "daily") {
-        fetchDailyUsage()
-      } else if (viewType === "provider") {
-        fetchProviderUsage()
-      }
-    }
-  }, [viewType, userId, mounted, fetchDailyUsage, fetchProviderUsage])
+  }, [currentUserId, mounted, checkDailyLimits])
 
   // Get current theme (dark/light)
   const currentTheme = mounted ? resolvedTheme || theme : "light"
   const isDark = currentTheme === "dark"
-
-  // Check daily limits when component mounts or userId changes
-  useEffect(() => {
-    if (userId && mounted) {
-      checkDailyLimits()
-    }
-  }, [userId, mounted, checkDailyLimits])
 
   const prepareMockData = () => {
     console.log("🔧 Preparing mock daily usage data")
@@ -480,7 +484,7 @@ const BarChart: React.FC<BarChartProps> = ({
 
     if ("name" in rawData[0] && "value" in rawData[0]) {
       console.log("📊 Data already in correct format")
-      return rawData as DailyUsageData[] // Add type assertion here
+      return rawData as DailyUsageData[]
     }
 
     console.log("❌ Unknown data format:", rawData[0])
@@ -569,7 +573,7 @@ const BarChart: React.FC<BarChartProps> = ({
     if (viewType === "daily") {
       const todayUsage = values[values.length - 1]
       if (
-        userId &&
+        currentUserId &&
         dailyUsageStats.dailyLimit &&
         todayUsage >= dailyUsageStats.dailyLimit
       ) {
@@ -712,6 +716,7 @@ const BarChart: React.FC<BarChartProps> = ({
   }
 
   console.log("🖼️ Rendering BarChart:")
+  console.log("  - Current User ID:", currentUserId)
   console.log("  - Loading:", isLoading)
   console.log("  - Error:", error)
   console.log("  - Has chart data:", !!chartData)
@@ -724,6 +729,39 @@ const BarChart: React.FC<BarChartProps> = ({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="animate-pulse">Loading...</div>
+      </div>
+    )
+  }
+
+  // Show message when no user is logged in
+  if (!currentUserId) {
+    return (
+      <div className="flex size-full flex-col space-y-4">
+        <div
+          className={`rounded-lg border p-4 ${
+            isDark
+              ? "border-slate-700 bg-slate-800"
+              : "border-slate-200 bg-slate-50"
+          }`}
+        >
+          <div className="text-center">
+            <h5
+              className={`text-lg font-semibold ${
+                isDark ? "text-slate-200" : "text-slate-800"
+              }`}
+            >
+              Please Log In
+            </h5>
+            <p
+              className={`mt-2 text-sm ${
+                isDark ? "text-slate-400" : "text-slate-600"
+              }`}
+            >
+              You need to be logged in to view your usage statistics and set
+              limits.
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -844,7 +882,7 @@ const BarChart: React.FC<BarChartProps> = ({
         </div>
       )}
 
-      {/* View Selector - MOVED OUTSIDE THE CHART CARD */}
+      {/* View Selector */}
       <div className=" justify-right items-center">
         <h3
           className={`text-lg font-semibold ${

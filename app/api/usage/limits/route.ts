@@ -69,9 +69,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate type
-    if (!["model", "user", "agent", "provider"].includes(type)) {
+    if (!["model", "daily", "agent", "provider"].includes(type)) {
       return NextResponse.json(
-        { error: "type must be one of: model, user, agent, provider" },
+        { error: "type must be one of: model, daily, agent, provider" },
         { status: 400 }
       )
     }
