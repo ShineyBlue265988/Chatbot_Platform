@@ -32,22 +32,19 @@ export async function checkBeforeGeneration({
   userId,
   modelName,
   modelProvider,
-  agentId,
-  estimatedTokens
+  agentId
 }: {
   userId: string
   modelName: string
   modelProvider: string
   agentId?: string
-  estimatedTokens: number
 }) {
   try {
     await enforceUsageLimits({
       userId,
       modelName,
       modelProvider,
-      agentId,
-      estimatedTokens
+      agentId
     })
     return { allowed: true }
   } catch (error) {

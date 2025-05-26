@@ -41,8 +41,9 @@ export class ChatService {
       }
     })
 
-    const response = await model.invoke(formattedMessages)
-    const usage = response.usage_metadata ?? response.response_metadata ?? null
+    const response = await model.invoke(formattedMessages as any)
+    const usage =
+      response.response_metadata ?? response.response_metadata ?? null
 
     // Save usage if available
     if (usage) {
@@ -88,7 +89,7 @@ export class ChatService {
       }
     })
 
-    const stream = await model.stream(formattedMessages)
+    const stream = await model.stream(formattedMessages as any)
 
     let finalResult: AIMessageChunk | undefined
     for await (const chunk of stream) {
@@ -105,9 +106,9 @@ export class ChatService {
       }
       // Save the last chunk for usage metadata
       if (finalResult) {
-        finalResult = concat(finalResult, chunk)
+        finalResult = concat(finalResult, chunk as any)
       } else {
-        finalResult = chunk
+        finalResult = chunk as AIMessageChunk
       }
     }
 

@@ -8,6 +8,14 @@ import { fetchTokenUsage } from "@/lib/llm/fetchTokenUsage"
 import { supabase } from "@/lib/supabase/browser-client"
 import { TokenUsageStats } from "@/lib/llm/token-usage"
 
+// Add proper typing for the usage object
+interface UsageStats {
+  byModel: Record<string, number>
+  byProvider: Record<string, number>
+  byUser: Record<string, number>
+  byAgent: Record<string, number>
+}
+
 export async function enforceUsageLimits({
   userId,
   modelName,
@@ -42,21 +50,24 @@ export async function enforceUsageLimits({
 
   if (limitsError) throw limitsError
 
-  // Get current month's usage
+  // Change from monthly to daily
   const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()) // Start of today
+  const endOfDay = new Date(startOfDay)
+  endOfDay.setDate(endOfDay.getDate() + 1) // End of today
 
   const { data: usageData, error: usageError } = await supabase
     .from("token_usage")
     .select("*")
     .eq("user_id", userId)
-    .eq("model_provider", modelProvider) // Added to filter by provider
-    .gte("created_at", startOfMonth.toISOString())
+    .eq("model_provider", modelProvider)
+    .gte("created_at", startOfDay.toISOString()) // From start of today
+    .lt("created_at", endOfDay.toISOString()) // Until end of today
 
   if (usageError) throw usageError
 
-  // Calculate usage
-  const usage = {
+  // Calculate usage with proper typing
+  const usage: UsageStats = {
     byModel: {},
     byProvider: {},
     byUser: {},

@@ -4,9 +4,11 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { ChatSettings } from "@/types"
 
+type SupportedChatModel = ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI
+
 export class LLMService {
   private static instance: LLMService
-  private models: Map<string, BaseChatModel> = new Map()
+  private models: Map<string, SupportedChatModel> = new Map()
 
   private constructor() {}
 
@@ -17,14 +19,17 @@ export class LLMService {
     return LLMService.instance
   }
 
-  public getModel(chatSettings: ChatSettings, apiKey: string): BaseChatModel {
+  public getModel(
+    chatSettings: ChatSettings,
+    apiKey: string
+  ): SupportedChatModel {
     const modelKey = `${chatSettings.model}-${apiKey}`
 
     if (this.models.has(modelKey)) {
       return this.models.get(modelKey)!
     }
 
-    let model: BaseChatModel
+    let model: SupportedChatModel
 
     // Check for OpenRouter models first (they can have various formats)
     if (chatSettings.model.includes("/") || chatSettings.model.includes(":")) {

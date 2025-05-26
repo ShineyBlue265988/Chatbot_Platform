@@ -56,7 +56,7 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
 
   return (
     <TabsContent
-      className="m-0 w-full space-y-2"
+      className="m-0 w-full space-y-2 overflow-y-auto "
       style={{
         // Sidebar - SidebarSwitcher
         minWidth: showSidebar ? `calc(${SIDEBAR_WIDTH}px - 60px)` : "0px",
