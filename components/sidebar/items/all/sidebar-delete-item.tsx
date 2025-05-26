@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { ChatbotUIContext } from "@/context/context"
 import { deleteAssistant } from "@/db/assistants"
 import { deleteChat } from "@/db/chats"
@@ -74,6 +75,15 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     },
     models: async (model: Tables<"models">) => {
       await deleteModel(model.id)
+    },
+    roles: async () => {
+      throw new Error("Role deletion not implemented")
+    },
+    "users-analytics": async () => {
+      throw new Error("Users analytics deletion not implemented")
+    },
+    "usage-limits": async () => {
+      throw new Error("Usage limits deletion not implemented")
     }
   }
 
@@ -85,11 +95,20 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    roles: () => {}, // No-op function
+    "users-analytics": () => {}, // No-op function
+    "usage-limits": () => {} // No-op function
   }
 
   const handleDelete = async () => {
     if (contentType === "teams") return // Prevent handling teams here
+
+    // Handle special content types that don't support deletion
+    if (["roles", "users-analytics", "usage-limits"].includes(contentType)) {
+      toast.error(`Deleting ${contentType} is not supported`)
+      return
+    }
     const deleteFunction = deleteFunctions[contentType]
     const setStateFunction = stateUpdateFunctions[contentType]
 

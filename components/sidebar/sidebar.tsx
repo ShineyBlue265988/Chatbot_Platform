@@ -11,6 +11,7 @@ import TeamList from "@/components/sidebar/items/teams/TeamList"
 import RolesPermissions from "@/components/sidebar/items/roles/RolesPermissions"
 import UsersAnalytics from "@/components/sidebar/items/users/UsersAnalytics"
 import UsageLimits from "@/components/sidebar/items/usage/UsageLimits"
+import { UsageSidebar } from "./items/usage/UsageSidebar"
 
 interface SidebarProps {
   contentType: ContentType
@@ -115,7 +116,7 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
               return <UsersAnalytics />
 
             case "usage-limits":
-              return <UsageLimits />
+              return <UsageSidebar />
 
             default:
               return null

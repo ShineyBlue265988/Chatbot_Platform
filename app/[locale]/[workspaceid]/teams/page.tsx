@@ -24,10 +24,11 @@ const TeamsMainBoard = () => {
 
   return (
     <div className="p-6">
-      <TeamMembersList
+      {/* <TeamMembersList
+
         teamId={selectedTeamId}
         currentUserId={profile.user_id}
-      />
+      /> */}
     </div>
   )
 }

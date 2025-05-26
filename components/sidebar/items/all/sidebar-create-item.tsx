@@ -170,7 +170,16 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
       return updatedAssistant
     },
     tools: createTool,
-    models: createModel
+    models: createModel,
+    roles: () => {
+      throw new Error("Role creation not implemented")
+    },
+    "users-analytics": () => {
+      throw new Error("Users analytics creation not implemented")
+    },
+    "usage-limits": () => {
+      throw new Error("Usage limits creation not implemented")
+    }
   }
 
   const stateUpdateFunctions = {
@@ -181,7 +190,11 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    // Add missing content types
+    roles: () => {}, // No-op function since roles might not have a state setter
+    "users-analytics": () => {}, // No-op function
+    "usage-limits": () => {} // No-op function
   }
 
   const handleCreate = async () => {
@@ -189,6 +202,12 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
       if (!selectedWorkspace) return
       if (isTyping) return // Prevent creation while typing
       if (contentType === "teams") return // Prevent handling teams here
+
+      // Handle special content types that don't support creation
+      if (["roles", "users-analytics", "usage-limits"].includes(contentType)) {
+        toast.error(`Creating ${contentType} is not supported`)
+        return
+      }
 
       const createFunction = createFunctions[contentType]
       const setStateFunction = stateUpdateFunctions[contentType]

@@ -21,7 +21,7 @@ import { ModelItem } from "./items/models/model-item"
 import { PresetItem } from "./items/presets/preset-item"
 import { PromptItem } from "./items/prompts/prompt-item"
 import { ToolItem } from "./items/tools/tool-item"
-
+import { toast } from "sonner"
 interface SidebarDataListProps {
   contentType: ContentType
   data: DataListType
@@ -167,7 +167,16 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: updateCollection,
     assistants: updateAssistant,
     tools: updateTool,
-    models: updateModel
+    models: updateModel,
+    roles: async (roleId: string, role: any) => {
+      throw new Error("Role updates not implemented")
+    },
+    "users-analytics": async (analyticsId: string, analytics: any) => {
+      throw new Error("Users analytics updates not implemented")
+    },
+    "usage-limits": async (limitId: string, limit: any) => {
+      throw new Error("Usage limits updates not implemented")
+    }
   }
 
   const stateUpdateFunctions = {
@@ -178,7 +187,10 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    roles: () => {}, // No-op function
+    "users-analytics": () => {}, // No-op function
+    "usage-limits": () => {} // No-op function
   }
 
   const updateFolder = async (itemId: string, folderId: string | null) => {
@@ -186,7 +198,16 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
     if (!item) return null
     if (contentType === "teams") return null
-    type UpdatableContentType = Exclude<ContentType, "teams">
+
+    if (["roles", "users-analytics", "usage-limits"].includes(contentType)) {
+      toast.error(`Updating ${contentType} is not supported`)
+      return null
+    }
+
+    type UpdatableContentType = Exclude<
+      ContentType,
+      "teams" | "roles" | "users-analytics" | "usage-limits"
+    >
     const updateFunction = updateFunctions[contentType as UpdatableContentType]
     const setStateFunction =
       stateUpdateFunctions[contentType as UpdatableContentType]

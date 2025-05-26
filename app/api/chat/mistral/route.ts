@@ -8,9 +8,10 @@ export const runtime: ServerRuntime = "edge"
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as {
+  const { chatSettings, messages, userId } = json as {
     chatSettings: ChatSettings
     messages: any[]
+    userId: string
   }
 
   try {
@@ -30,7 +31,9 @@ export async function POST(request: Request) {
         profile.mistral_api_key || "",
         async token => {
           await writer.write(encoder.encode(token))
-        }
+        },
+        userId,
+        "mistral"
       )
       .then(async () => {
         await writer.close()

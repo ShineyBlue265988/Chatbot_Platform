@@ -24,7 +24,7 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
 
       return (
         <Message
-          key={chatMessage.message.sequence_number}
+          key={chatMessage.message.id}
           message={chatMessage.message}
           fileItems={messageFileItems}
           isEditing={editingMessage?.id === chatMessage.message.id}

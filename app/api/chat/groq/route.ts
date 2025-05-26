@@ -8,9 +8,10 @@ export const runtime: ServerRuntime = "edge"
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as {
+  const { chatSettings, messages, userId } = json as {
     chatSettings: ChatSettings
     messages: any[]
+    userId: string
   }
 
   try {
@@ -30,7 +31,9 @@ export async function POST(request: Request) {
         profile.groq_api_key || "",
         async token => {
           await writer.write(encoder.encode(token))
-        }
+        },
+        userId, // Add the required userId parameter
+        "groq" // Add the optional modelProvider parameter
       )
       .then(async () => {
         await writer.close()

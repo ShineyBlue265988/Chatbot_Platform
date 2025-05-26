@@ -30,6 +30,13 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
       setLoading(false)
       return
     }
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.")
+      setLoading(false)
+      return
+    }
     const { error } = await supabase
       .from("team_invites")
       .insert([
@@ -40,6 +47,7 @@ const TeamInviteModal: React.FC<TeamInviteModalProps> = ({
     } else {
       setSuccess("Invitation sent!")
       setEmail("")
+      onClose() // Close the modal on success
     }
     setLoading(false)
   }

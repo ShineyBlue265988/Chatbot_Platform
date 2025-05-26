@@ -78,7 +78,11 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     "collections",
     "assistants",
     "tools",
-    "models"
+    "models",
+    "roles",
+    "users-analytics",
+    "usage-limits",
+    "teams" // Add this line
   ]
 
   // Always default to 'All' (no folder filter) on mount or when contentType changes
@@ -139,11 +143,21 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    roles: () => {}, // No-op function
+    "users-analytics": () => {}, // No-op function
+    "usage-limits": () => {} // No-op function
   }
 
   // Action button handlers (bulk delete)
   const handleDelete = async () => {
+    if (contentType === "teams") return // Prevent handling teams here
+
+    // Handle special content types that don't support deletion
+    if (["roles", "users-analytics", "usage-limits"].includes(contentType)) {
+      toast.error(`Deleting ${contentType} is not supported`)
+      return
+    }
     if (!window.confirm("Are you sure you want to delete the selected items?"))
       return
     // Map contentType to delete function
@@ -178,6 +192,15 @@ export const SidebarContent: FC<SidebarContentProps> = ({
       },
       folders: async id => {
         await deleteFolder(id)
+      },
+      roles: () => {
+        throw new Error("Role deletion not implemented")
+      },
+      "users-analytics": () => {
+        throw new Error("Users analytics deletion not implemented")
+      },
+      "usage-limits": () => {
+        throw new Error("Usage limits deletion not implemented")
       }
     }
     const deleteFn = deleteFunctions[contentType]
@@ -191,7 +214,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     }
     setSelectedItems([])
     const setStateFunction =
-      contentType === "teams"
+      (contentType as string) === "teams"
         ? undefined
         : stateUpdateFunctions[contentType as keyof typeof stateUpdateFunctions]
     if (setStateFunction) {

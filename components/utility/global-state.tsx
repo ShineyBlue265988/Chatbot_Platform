@@ -221,8 +221,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // PROFILE STORE
         profile,
         setProfile,
-        activeWorkspaceId,
-        setActiveWorkspaceId,
         // ITEMS STORE
         assistants,
         setAssistants,
@@ -244,7 +242,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setTools,
         workspaces,
         setWorkspaces,
-
         // MODELS STORE
         envKeyMap,
         setEnvKeyMap,
@@ -254,17 +251,14 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setAvailableLocalModels,
         availableOpenRouterModels,
         setAvailableOpenRouterModels,
-
         // WORKSPACE STORE
         selectedWorkspace,
         setSelectedWorkspace,
         workspaceImages,
         setWorkspaceImages,
-
         // PRESET STORE
         selectedPreset,
         setSelectedPreset,
-
         // ASSISTANT STORE
         selectedAssistant,
         setSelectedAssistant,
@@ -272,7 +266,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setAssistantImages,
         openaiAssistants,
         setOpenaiAssistants,
-
         // PASSIVE CHAT STORE
         userInput,
         setUserInput,
@@ -284,7 +277,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setSelectedChat,
         chatFileItems,
         setChatFileItems,
-
         // ACTIVE CHAT STORE
         isGenerating,
         setIsGenerating,
@@ -292,7 +284,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setFirstTokenReceived,
         abortController,
         setAbortController,
-
         // CHAT INPUT COMMAND STORE
         isPromptPickerOpen,
         setIsPromptPickerOpen,
@@ -318,8 +309,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setAtCommand,
         isAssistantPickerOpen,
         setIsAssistantPickerOpen,
-
-        // ATTACHMENT STORE
+        // ATTACHMENTS STORE
         chatFiles,
         setChatFiles,
         chatImages,
@@ -330,20 +320,19 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setNewMessageImages,
         showFilesDisplay,
         setShowFilesDisplay,
-
         // RETRIEVAL STORE
         useRetrieval,
         setUseRetrieval,
         sourceCount,
         setSourceCount,
-
         // TOOL STORE
         selectedTools,
         setSelectedTools,
         toolInUse,
         setToolInUse,
-
         // NEW PROPERTY
+        activeWorkspaceId,
+        setActiveWorkspaceId,
         selectedTeamId,
         setSelectedTeamId
       }}
