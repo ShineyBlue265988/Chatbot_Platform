@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { Bar } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -93,7 +93,7 @@ const BarChart: React.FC<BarChartProps> = ({
     setMounted(true)
   }, [])
 
-  const fetchDailyUsage = async () => {
+  const fetchDailyUsage = useCallback(async () => {
     if (!userId) {
       prepareMockData()
       return
@@ -160,9 +160,9 @@ const BarChart: React.FC<BarChartProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [userId])
 
-  const fetchProviderUsage = async () => {
+  const fetchProviderUsage = useCallback(async () => {
     if (!userId) {
       prepareMockProviderData()
       return
@@ -214,24 +214,9 @@ const BarChart: React.FC<BarChartProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [userId]) // Only userId as dependency
 
-  // Fetch data when view type changes
-  useEffect(() => {
-    if (userId && mounted) {
-      if (viewType === "daily") {
-        fetchDailyUsage()
-      } else if (viewType === "provider") {
-        fetchProviderUsage()
-      }
-    }
-  }, [viewType, userId, mounted, fetchDailyUsage, fetchProviderUsage])
-
-  // Get current theme (dark/light)
-  const currentTheme = mounted ? resolvedTheme || theme : "light"
-  const isDark = currentTheme === "dark"
-
-  const checkDailyLimits = async () => {
+  const checkDailyLimits = useCallback(async () => {
     if (!userId) return
 
     try {
@@ -333,7 +318,40 @@ const BarChart: React.FC<BarChartProps> = ({
     } catch (error) {
       console.error("💥 Error checking daily limits:", error)
     }
-  }
+  }, [userId, onLimitReached])
+
+  // FIXED: Update the useEffect hooks to use the memoized functions
+  useEffect(() => {
+    if (userId && mounted) {
+      if (viewType === "daily") {
+        fetchDailyUsage()
+      } else if (viewType === "provider") {
+        fetchProviderUsage()
+      }
+    }
+  }, [viewType, userId, mounted, fetchDailyUsage, fetchProviderUsage])
+
+  // FIXED: Update this useEffect to use the memoized function
+  useEffect(() => {
+    if (userId && mounted) {
+      checkDailyLimits()
+    }
+  }, [userId, mounted, checkDailyLimits])
+
+  // Fetch data when view type changes
+  useEffect(() => {
+    if (userId && mounted) {
+      if (viewType === "daily") {
+        fetchDailyUsage()
+      } else if (viewType === "provider") {
+        fetchProviderUsage()
+      }
+    }
+  }, [viewType, userId, mounted, fetchDailyUsage, fetchProviderUsage])
+
+  // Get current theme (dark/light)
+  const currentTheme = mounted ? resolvedTheme || theme : "light"
+  const isDark = currentTheme === "dark"
 
   // Check daily limits when component mounts or userId changes
   useEffect(() => {
