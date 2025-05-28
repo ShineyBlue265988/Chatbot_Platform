@@ -42,7 +42,7 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({
     setError(null)
     const { error } = await supabase
       .from("team_members")
-      .update({ role: newRole as "admin" | "member" | "viewer" })
+      .update({ role: newRole as "owner" | "admin" | "member" })
       .eq("id", memberId)
     if (error) setError(error.message)
     else

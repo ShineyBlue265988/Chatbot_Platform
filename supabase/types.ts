@@ -1222,7 +1222,7 @@ export type Database = {
       teams: {
         Row: {
           created_at: string
-          created_by: string
+          creator_id: string
           description: string | null
           id: string
           is_active: boolean
@@ -1231,7 +1231,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          creator_id: string
           description?: string | null
           id?: string
           is_active?: boolean
@@ -1240,7 +1240,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          creator_id?: string
           description?: string | null
           id?: string
           is_active?: boolean
@@ -1357,6 +1357,7 @@ export type Database = {
           sharing: string
           updated_at: string | null
           user_id: string
+          team_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1376,6 +1377,7 @@ export type Database = {
           sharing?: string
           updated_at?: string | null
           user_id: string
+          team_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1395,6 +1397,7 @@ export type Database = {
           sharing?: string
           updated_at?: string | null
           user_id?: string
+          team_id?: string | null
         }
         Relationships: []
       }
@@ -1477,7 +1480,7 @@ export type Database = {
       }
     }
     Enums: {
-      team_role: "admin" | "member" | "viewer"
+      team_role: "admin" | "member" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2012,7 +2015,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      team_role: ["admin", "member", "viewer"]
+      team_role: ["admin", "member", "owner"]
     }
   },
   storage: {
