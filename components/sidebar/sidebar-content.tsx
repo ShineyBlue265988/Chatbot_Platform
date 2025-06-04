@@ -472,11 +472,13 @@ export const SidebarContent: FC<SidebarContentProps> = ({
           >
             <IconFilter size={22} />
           </button>
-          <div className="bg-background dark:bg-background absolute left-0 z-10 hidden w-48 rounded text-gray-800 shadow group-hover:block dark:text-gray-200">
-            <div className="p-2 font-bold">Filter by folder</div>
-            <div>
+          <div className="absolute right-0 top-full z-[9999] hidden w-48 rounded border bg-white text-gray-800 shadow-lg group-hover:block dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+            <div className="border-b border-gray-200 p-2 font-bold dark:border-gray-600">
+              Filter by folder
+            </div>
+            <div className="max-h-40 overflow-y-auto">
               <button
-                className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedFolderFilter === "" ? "font-bold" : ""}`}
+                className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedFolderFilter === "" ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
                 onClick={() => {
                   setSelectedFolderFilter("")
                   setFilterDropdownOpen(false)
@@ -487,7 +489,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
               {folders.map(folder => (
                 <button
                   key={folder.id}
-                  className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedFolderFilter === folder.id ? "font-bold" : ""}`}
+                  className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedFolderFilter === folder.id ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
                   onClick={() => {
                     setSelectedFolderFilter(folder.id)
                     setFilterDropdownOpen(false)
@@ -497,15 +499,15 @@ export const SidebarContent: FC<SidebarContentProps> = ({
                 </button>
               ))}
             </div>
-            <div className="my-2 border-t" />
+            <div className="border-t border-gray-200 dark:border-gray-600" />
             <div className="p-2">
-              <label className="flex cursor-pointer items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700">
                 <input
                   type="checkbox"
                   checked={showArchived}
                   onChange={e => setShowArchived(e.target.checked)}
                 />
-                Show archived
+                <span>Show archived</span>
               </label>
             </div>
           </div>
@@ -518,10 +520,12 @@ export const SidebarContent: FC<SidebarContentProps> = ({
           >
             <IconSortAscending2 size={22} />
           </button>
-          <div className="bg-background dark:bg-background  absolute left-0 z-10 hidden w-40 rounded text-gray-800 shadow group-hover:block dark:text-gray-200">
-            <div className="p-2 font-bold">Sort by</div>
+          <div className="absolute right-0 top-full z-[9999] hidden w-40 rounded border bg-white text-gray-800 shadow-lg group-hover:block dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+            <div className="border-b border-gray-200 p-2 font-bold dark:border-gray-600">
+              Sort by
+            </div>
             <button
-              className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedSort === "newest" ? "font-bold" : ""}`}
+              className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedSort === "newest" ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
               onClick={() => {
                 setSelectedSort("newest")
                 setSortDropdownOpen(false)
@@ -530,7 +534,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
               Newest
             </button>
             <button
-              className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedSort === "oldest" ? "font-bold" : ""}`}
+              className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedSort === "oldest" ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
               onClick={() => {
                 setSelectedSort("oldest")
                 setSortDropdownOpen(false)
@@ -539,7 +543,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
               Oldest
             </button>
             <button
-              className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedSort === "name-asc" ? "font-bold" : ""}`}
+              className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedSort === "name-asc" ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
               onClick={() => {
                 setSelectedSort("name-asc")
                 setSortDropdownOpen(false)
@@ -548,7 +552,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
               Name (A-Z)
             </button>
             <button
-              className={`block w-full px-2 py-1 text-left hover:opacity-50 ${selectedSort === "name-desc" ? "font-bold" : ""}`}
+              className={`block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedSort === "name-desc" ? "bg-gray-100 font-bold dark:bg-gray-700" : ""}`}
               onClick={() => {
                 setSelectedSort("name-desc")
                 setSortDropdownOpen(false)
@@ -559,6 +563,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
           </div>
         </div>
       </div>
+      <div className="mt-2 flex items-center gap-2"></div>
 
       {/* Action bar for multi-select mode */}
       {multiSelectMode && (

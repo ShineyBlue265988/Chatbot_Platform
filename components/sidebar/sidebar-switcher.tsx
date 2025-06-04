@@ -40,7 +40,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           onContentTypeChange={onContentTypeChange}
         />
         {/* Content sections - protected by permissions */}
-        <PermissionGuard permission="prompts.read">
+        <PermissionGuard permission="presets.read">
           <SidebarSwitchItem
             icon={<IconAdjustmentsHorizontal size={SIDEBAR_ICON_SIZE} />}
             contentType="presets"
