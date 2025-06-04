@@ -267,6 +267,17 @@ export const getUserPermissions = async (
   }
 }
 
+// Add this new hook at the end of your permissions.ts file
+
+export const useCanViewAnalytics = (userId: string, workspaceId: string) => {
+  const { hasPermission, loading } = usePermissions(userId, workspaceId)
+
+  return {
+    canViewAnalytics: hasPermission("users.analytics"),
+    loading
+  }
+}
+
 // Get user's roles with team context
 export const getUserRoles = async (
   userId: string,

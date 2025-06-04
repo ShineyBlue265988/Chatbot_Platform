@@ -9,8 +9,7 @@ import { WorkspaceSettings } from "../workspace/workspace-settings"
 import { SidebarContent } from "./sidebar-content"
 import TeamList from "@/components/sidebar/items/teams/TeamList"
 import RolesPermissions from "@/components/sidebar/items/roles/RolesPermissions"
-import UsersAnalytics from "@/components/sidebar/items/users/UsersAnalytics"
-import UsageLimits from "@/components/sidebar/items/usage/UsageLimits"
+import { UsersAnalytics } from "@/components/sidebar/items/users/UsersAnalytics" // Fix: Remove default import, use named importimport UsageLimits from "@/components/sidebar/items/usage/UsageLimits"
 import { UsageSidebar } from "./items/usage/UsageSidebar"
 
 interface SidebarProps {
@@ -112,8 +111,8 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
             case "roles":
               return <RolesPermissions />
 
-            case "users-analytics":
-              return <UsersAnalytics />
+            // case "users-analytics":
+            //   return <UsersAnalytics />
 
             case "usage-limits":
               return <UsageSidebar />

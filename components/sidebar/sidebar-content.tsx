@@ -80,7 +80,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     "tools",
     "models",
     "roles",
-    "users-analytics",
+    // "users-analytics",
     "usage-limits",
     "teams" // Add this line
   ]
@@ -145,7 +145,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     tools: setTools,
     models: setModels,
     roles: () => {}, // No-op function
-    "users-analytics": () => {}, // No-op function
+    // "users-analytics": () => {}, // No-op function
     "usage-limits": () => {} // No-op function
   }
 

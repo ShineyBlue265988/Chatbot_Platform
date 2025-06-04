@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const stream = new TransformStream()
     const writer = stream.writable.getWriter()
     console.log("profile--------------->", profile)
-
+    // const workspaceId = profile.workspace_id
     chatService
       .streamChat(
         messages,
@@ -88,6 +88,7 @@ export async function POST(request: Request) {
         },
         userId,
         provider
+        // workspaceId
       )
       .then(async () => {
         await writer.close()

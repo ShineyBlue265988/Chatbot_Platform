@@ -442,7 +442,7 @@ const RolesPermissions = () => {
                   key={permission.id}
                   className="p-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
                 >
-                  <div className="origin-center -rotate-45 whitespace-nowrap">
+                  <div className="origin-center  whitespace-nowrap">
                     {permission.name}
                   </div>
                 </th>
@@ -493,11 +493,30 @@ const RolesPermissions = () => {
                           onChange={() =>
                             handlePermissionToggle(role, permission.id)
                           }
-                          className={`size-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500${
+                          className={`
+                          size-4 
+                          rounded 
+                          border-2
+                          border-black
+                          bg-white
+                          transition-colors
+                          checked:border-blue-600
+                          checked:bg-blue-600
+                          focus:ring-2
+                          focus:ring-blue-500
+                          focus:ring-offset-2
+                          dark:border-white 
+                          dark:bg-black
+                          dark:checked:border-blue-500
+                          dark:checked:bg-blue-500
+                          dark:focus:ring-blue-400
+                          dark:focus:ring-offset-black
+                          ${
                             isDisabled
                               ? "cursor-not-allowed opacity-50"
-                              : "cursor-pointer"
-                          }`}
+                              : "cursor-pointer hover:border-blue-500 dark:hover:border-blue-400"
+                          }
+                        `}
                           title={
                             role.is_system_role
                               ? "System roles cannot be modified"
@@ -505,7 +524,7 @@ const RolesPermissions = () => {
                           }
                         />
                         {isLoading && (
-                          <div className="ml-1 size-3 animate-spin rounded-full border border-blue-600 border-t-transparent"></div>
+                          <div className="ml-1 size-3 animate-spin rounded-full border-2 border-blue-600 border-t-transparent dark:border-blue-400"></div>
                         )}
                       </div>
                     </td>
@@ -518,7 +537,7 @@ const RolesPermissions = () => {
       </div>
 
       {/* Create New Role Button */}
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <button
           className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           onClick={() => setShowModal(true)}
@@ -539,7 +558,7 @@ const RolesPermissions = () => {
           </svg>
           Create New Role
         </button>
-      </div>
+      </div> */}
 
       {/* Create Role Modal */}
       {showModal && (

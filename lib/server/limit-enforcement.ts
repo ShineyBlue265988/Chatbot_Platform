@@ -96,11 +96,11 @@ export async function enforceUsageLimits({
     // console.log(`usage.byUser[${userId}]=============>`, usage.byUser[userId])
 
     // Update by agent
-    if (record.agent_id) {
-      usage.byAgent[record.agent_id] =
-        (usage.byAgent[record.agent_id] || 0) + totalTokens
-      // console.log(`usage.byAgent[${record.agent_id}]=============>`, usage.byAgent[record.agent_id])
-    }
+    // if (record.agent_id) {
+    //   usage.byAgent[record.agent_id] =
+    //     (usage.byAgent[record.agent_id] || 0) + totalTokens
+    //   // console.log(`usage.byAgent[${record.agent_id}]=============>`, usage.byAgent[record.agent_id])
+    // }
   }
 
   // Check limits including estimated tokens

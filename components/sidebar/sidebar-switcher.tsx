@@ -116,13 +116,13 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           />
         </PermissionGuard>
 
-        <PermissionGuard permission="users.analytics">
+        {/* <PermissionGuard permission="users.analytics">
           <SidebarSwitchItem
             icon={<IconAnalyze size={SIDEBAR_ICON_SIZE} />}
             contentType="users-analytics"
             onContentTypeChange={onContentTypeChange}
           />
-        </PermissionGuard>
+        </PermissionGuard> */}
 
         <PermissionGuard permission="usage.read">
           <SidebarSwitchItem

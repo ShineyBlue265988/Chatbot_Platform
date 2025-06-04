@@ -57,8 +57,8 @@ export class ChatService {
         modelProvider,
         inputTokens: usage.input_tokens,
         outputTokens: usage.output_tokens,
-        totalTokens: usage.total_tokens,
-        workspaceId
+        totalTokens: usage.total_tokens
+        // workspaceId
       })
     }
 
@@ -74,7 +74,7 @@ export class ChatService {
     apiKey: string,
     onToken: (token: string) => void,
     userId: string,
-    workspaceId: string | null,
+    // workspaceId: string | null,
     modelProvider?: string
   ): Promise<{ usage: any }> {
     const model = this.llmService.getModel(chatSettings, apiKey)
@@ -129,8 +129,8 @@ export class ChatService {
         modelProvider,
         inputTokens: usage.input_tokens,
         outputTokens: usage.output_tokens,
-        totalTokens: usage.total_tokens,
-        workspaceId
+        totalTokens: usage.total_tokens
+        // workspaceId
       })
     }
 

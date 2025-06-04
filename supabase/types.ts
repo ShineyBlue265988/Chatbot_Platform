@@ -421,8 +421,8 @@ export type Database = {
           output_tokens: number // Number of output tokens generated
           total_tokens: number // Sum of input and output tokens
           created_at: string // Timestamp string
-          agent_id: string | null  // Add agent_id field
-          workspace_id: string | null
+          // agent_id: string | null  // Add agent_id field
+          // workspace_id: string | null
           // Add any other columns from your token_usage table here
           // Example: chat_id: string | null
         }
@@ -435,8 +435,8 @@ export type Database = {
           output_tokens: number // Required on insert
           total_tokens: number // Required on insert
           created_at?: string // Timestamp is often auto-generated, so optional on insert
-          agent_id: string | null  // Add agent_id field
-          workspace_id: string | null
+          // agent_id: string | null  // Add agent_id field
+          // workspace_id: string | null
           // Add other columns, mark optional if they have defaults or are nullable
         }
         Update: { // Represents the shape of data used to update 'token_usage'
@@ -448,8 +448,8 @@ export type Database = {
           output_tokens?: number // Optional on update
           total_tokens?: number // Optional on update
           created_at?: string // Optional on update
-          agent_id: string | null  // Add agent_id field
-          workspace_id: string | null
+          // agent_id: string | null  // Add agent_id field
+          // workspace_id: string | null
           // Add other columns, all should be optional on update
         }
         Relationships: [
@@ -460,20 +460,13 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "public_token_usage_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_token_usage_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          }
+          // {
+          //   foreignKeyName: "public_token_usage_workspace_id_fkey"
+          //   columns: ["workspace_id"]
+          //   isOneToOne: false
+          //   referencedRelation: "workspaces"
+          //   referencedColumns: ["id"]
+          // }
           // Add other relationships here if any (e.g., to chats table via chat_id)
         ]
       }

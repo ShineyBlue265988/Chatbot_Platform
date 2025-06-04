@@ -91,10 +91,10 @@ export async function fetchTokenUsage(userId: string): Promise<TokenUsage> {
     usage.byUser[userId] = (usage.byUser[userId] || 0) + totalTokens
 
     // Update by agent
-    if (record.agent_id) {
-      usage.byAgent[record.agent_id] =
-        (usage.byAgent[record.agent_id] || 0) + totalTokens
-    }
+    // if (record.agent_id) {
+    //   usage.byAgent[record.agent_id] =
+    //     (usage.byAgent[record.agent_id] || 0) + totalTokens
+    // }
   }
 
   return usage
