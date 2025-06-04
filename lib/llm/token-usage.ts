@@ -7,7 +7,8 @@ export async function saveTokenUsage({
   modelProvider,
   inputTokens,
   outputTokens,
-  totalTokens
+  totalTokens,
+  workspaceId
 }: {
   userId: string
   modelName: string
@@ -15,6 +16,7 @@ export async function saveTokenUsage({
   inputTokens: number
   outputTokens: number
   totalTokens: number
+  workspaceId: string | null
 }) {
   const { error } = await supabase.from("token_usage").insert([
     {
@@ -23,7 +25,9 @@ export async function saveTokenUsage({
       model_provider: modelProvider,
       input_tokens: inputTokens,
       output_tokens: outputTokens,
-      total_tokens: totalTokens
+      total_tokens: totalTokens,
+      agent_id: null,
+      workspace_id: workspaceId
     }
   ])
   if (error) throw error

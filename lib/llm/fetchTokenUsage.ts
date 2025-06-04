@@ -28,8 +28,8 @@ export async function fetchTokenUsage(workspaceId: string) {
   data.forEach(row => {
     byModel[row.model_name] = (byModel[row.model_name] || 0) + row.total_tokens
     byUser[row.user_id] = (byUser[row.user_id] || 0) + row.total_tokens
-    byProvider[row.provider] =
-      (byProvider[row.provider] || 0) + row.total_tokens // Add this
+    byProvider[row.model_provider] =
+      (byProvider[row.model_provider] || 0) + row.total_tokens // Add this
   })
 
   console.log("[fetchTokenUsage] Aggregated usage:", {

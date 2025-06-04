@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const modelLimits = limits.reduce((acc: any, limit) => {
       const existingLimit = acc[limit.target]
       // Only override if there's no existing limit or if this is a user-specific limit
-      if (!existingLimit || limit.user_id) {
+      if (!existingLimit) {
         acc[limit.target] = limit
       }
       return acc

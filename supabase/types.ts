@@ -373,6 +373,274 @@ export type Database = {
           }
         ]
       }
+      usage_limits: { // Add this block for the usage_limits table
+        Row: { // Represents the shape of data fetched from the 'usage_limits' table
+          id: string // Assuming UUID
+          type: string // Type of limit (e.g., 'monthly', 'daily')
+          target: string // Target of the limit (e.g., 'user_id', 'workspace_id', 'global')
+          usage_limit: number // The numerical value of the limit
+          created_at: string // Timestamp string
+          updated_at: string | null // Timestamp string, potentially null
+        }
+        Insert: { // Represents the shape of data used to insert into 'usage_limits'
+          id?: string // ID is often auto-generated, so optional on insert
+          type: string // Required on insert
+          target: string // Required on insert
+          usage_limit: number // Required on insert
+          created_at?: string // Timestamp is often auto-generated, so optional on insert
+          updated_at?: string | null // Optional and potentially null on insert
+        }
+        Update: { // Represents the shape of data used to update 'usage_limits'
+          id?: string // Optional on update
+          type?: string // Optional on update
+          target?: string // Optional on update
+          usage_limit?: number // Optional on update
+          created_at?: string // Optional on update
+          updated_at?: string | null // Optional on update
+        }
+        Relationships: [
+          // Add relationships here if 'target' is a foreign key to another table like 'users' or 'workspaces'.
+          // For example, if 'target' is always a user_id:
+          // {
+          //   foreignKeyName: "public_usage_limits_target_fkey" // Replace with the actual foreign key name
+          //   columns: ["target"]
+          //   isOneToOne: false
+          //   referencedRelation: "users" // Or "workspaces", etc.
+          //   referencedColumns: ["id"]
+          // },
+        ]
+      }
+
+      token_usage: { // Add this block for the token_usage table
+        Row: { // Represents the shape of data fetched from the 'token_usage' table
+          id: string // Assuming UUID
+          user_id: string // Assuming links to the users table
+          model_provider: string // e.g., 'openai', 'anthropic'
+          model_name: string // e.g., 'gpt-4', 'claude-3'
+          input_tokens: number // Number of input tokens used
+          output_tokens: number // Number of output tokens generated
+          total_tokens: number // Sum of input and output tokens
+          created_at: string // Timestamp string
+          agent_id: string | null  // Add agent_id field
+          workspace_id: string | null
+          // Add any other columns from your token_usage table here
+          // Example: chat_id: string | null
+        }
+        Insert: { // Represents the shape of data used to insert into 'token_usage'
+          id?: string // ID is often auto-generated, so optional on insert
+          user_id: string // Assuming required on insert
+          model_provider: string // Required on insert
+          model_name: string // Required on insert
+          input_tokens: number // Required on insert
+          output_tokens: number // Required on insert
+          total_tokens: number // Required on insert
+          created_at?: string // Timestamp is often auto-generated, so optional on insert
+          agent_id: string | null  // Add agent_id field
+          workspace_id: string | null
+          // Add other columns, mark optional if they have defaults or are nullable
+        }
+        Update: { // Represents the shape of data used to update 'token_usage'
+          id?: string // Optional on update
+          user_id?: string // Optional on update
+          model_provider?: string // Optional on update
+          model_name?: string // Optional on update
+          input_tokens?: number // Optional on update
+          output_tokens?: number // Optional on update
+          total_tokens?: number // Optional on update
+          created_at?: string // Optional on update
+          agent_id: string | null  // Add agent_id field
+          workspace_id: string | null
+          // Add other columns, all should be optional on update
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_token_usage_user_id_fkey" // Replace with your actual foreign key name
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_token_usage_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "assistants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_token_usage_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          }
+          // Add other relationships here if any (e.g., to chats table via chat_id)
+        ]
+      }
+      permissions: { // Add this block for the permissions table
+        Row: { // Represents the shape of data fetched from the 'permissions' table
+          id: string // Assuming UUID or similar primary key
+          name: string // The permission key (e.g., 'team.read')
+          description: string | null // Description of the permission, could be nullable
+          created_at: string // Timestamp string
+          // Add any other columns from your permissions table here
+        }
+        Insert: { // Represents the shape of data used to insert into 'permissions'
+          id?: string // ID is often auto-generated, so optional on insert
+          name: string // Required on insert
+          description?: string | null // Optional/nullable on insert
+          created_at?: string // Timestamp is often auto-generated, so optional on insert
+          // Add other columns, mark optional if they have defaults or are nullable
+        }
+        Update: { // Represents the shape of data used to update 'permissions'
+          id?: string // Optional on update
+          name?: string // Optional on update
+          description?: string | null // Optional on update
+          created_at?: string // Optional on update
+          // Add other columns, all should be optional on update
+        }
+        Relationships: [
+          // Add relationships here if any (unlikely for a simple permissions list table)
+        ]
+      }
+      roles: { // Add or update this block for the roles table
+        Row: { // Represents the shape of data fetched from the 'roles' table
+          id: string // Assuming UUID
+          name: string // The role name (e.g., 'Owner', 'Admin')
+          description: string | null // Description of the role, can be null
+          permissions: string[] // JSONB array of permission strings
+          is_system_role: boolean // Flag for system roles
+          workspace_id: string // UUID linking to the workspaces table
+          created_at: string // Timestamp string
+          updated_at: string | null // Timestamp string, potentially null
+          // Add any other columns from your roles table here
+        }
+        Insert: { // Represents the shape of data used to insert into 'roles'
+          id?: string // ID is often auto-generated, so optional on insert
+          name: string // Required on insert
+          description?: string | null // Optional/nullable on insert
+          permissions: string[] // Required on insert
+          is_system_role: boolean // Required on insert
+          workspace_id: string // Required on insert
+          created_at?: string // Timestamp is often auto-generated, so optional on insert
+          updated_at?: string | null // Optional/nullable on insert
+          // Add other columns, mark optional if they have defaults or are nullable
+        }
+        Update: { // Represents the shape of data used to update 'roles'
+          id?: string // Optional on update
+          name?: string // Optional on update
+          description?: string | null // Optional on update
+          permissions?: string[] // Optional on update
+          is_system_role?: boolean // Optional on update
+          workspace_id?: string // Optional on update
+          created_at?: string // Optional on update
+          updated_at?: string | null // Optional on update
+          // Add other columns, all should be optional on update
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_roles_workspace_id_fkey" // Replace with your actual foreign key name
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          // Add other relationships here if any (e.g., creator_id if you have one)
+        ]
+      }
+      team_invites: { // Add or update this block for the team_invites table
+        Row: { // Represents the shape of data fetched from the 'team_invites' table
+          id: string // Assuming UUID
+          team_id: string // UUID linking to the teams table (implied by code)
+          email: string // Email of the invited user
+          invited_by: string | null // UUID linking to the users table, could be null if system invite?
+          status: string // e.g., 'pending', 'accepted', 'declined'
+          created_at: string // Timestamp string
+          token: string | null // Invite token, could be null once used/expired?
+          // Add any other columns from your team_invites table here
+        }
+        Insert: { // Represents the shape of data used to insert into 'team_invites'
+          id?: string // ID is often auto-generated, so optional on insert
+          team_id: string // Required on insert (implied by code)
+          email: string // Required on insert
+          invited_by?: string | null // Optional/nullable on insert
+          status?: string // Often defaults to 'pending', so optional on insert
+          created_at?: string // Timestamp is often auto-generated, so optional on insert
+          token?: string | null // Token might be generated by backend, so optional/nullable
+          // Add other columns, mark optional if they have defaults or are nullable
+        }
+        Update: { // Represents the shape of data used to update 'team_invites'
+          id?: string // Optional on update
+          team_id?: string // Optional on update
+          email?: string // Optional on update
+          invited_by?: string | null // Optional on update
+          status?: string // Optional on update
+          created_at?: string // Optional on update
+          token?: string | null // Optional on update
+          // Add other columns, all should be optional on update
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_team_invites_team_id_fkey" // Replace with your actual foreign key name
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+           {
+             foreignKeyName: "public_team_invites_invited_by_fkey" // Replace with your actual foreign key name
+             columns: ["invited_by"]
+             isOneToOne: false
+             referencedRelation: "users" // Or "profiles" depending on your setup
+             referencedColumns: ["id"] // Or ["user_id"]
+           },
+          // Add other relationships here if any
+        ]
+      }
+      team_workspaces: { // Add this block for the team_workspaces table/view
+        Row: { // Represents the shape of data fetched from 'team_workspaces'
+          id: string // Assuming UUID or similar primary key
+          team_id: string // UUID linking to the teams table
+          name: string // Name (likely of the workspace, or a combined name?)
+          created_at: string // Timestamp string
+          workspace_id: string // UUID linking to the workspaces table
+          // Add any other columns from your team_workspaces table/view here
+        }
+        Insert: { // Represents the shape of data used to insert (if it's a table)
+          // Note: If this is a view, Insert/Update/Delete might not be applicable or different
+          id?: string // ID is often auto-generated, so optional on insert
+          team_id: string // Required on insert
+          name: string // Required on insert
+          created_at?: string // Timestamp is often auto-generated, optional
+          workspace_id: string // Required on insert
+          // Add other columns, mark optional if they have defaults or are nullable
+        }
+        Update: { // Represents the shape of data used to update (if it's a table)
+          id?: string // Optional on update
+          team_id?: string // Optional on update
+          name?: string // Optional on update
+          created_at?: string // Optional on update
+          workspace_id?: string // Optional on update
+          // Add other columns, all should be optional on update
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_team_workspaces_team_id_fkey" // Replace with actual FK name if exists
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+           {
+             foreignKeyName: "public_team_workspaces_workspace_id_fkey" // Replace with actual FK name if exists
+             columns: ["workspace_id"]
+             isOneToOne: false
+             referencedRelation: "workspaces"
+             referencedColumns: ["id"]
+           },
+          // Add other relationships here if any
+        ]
+      }
       collection_files: {
         Row: {
           collection_id: string
@@ -1480,7 +1748,7 @@ export type Database = {
       }
     }
     Enums: {
-      team_role: "admin" | "member" | "owner"
+      team_role: "Admin" | "Member" | "Owner" | "Viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1902,6 +2170,7 @@ export type Database = {
       [_ in never]: never
     }
   }
+  
 }
 
 type DefaultSchema = Database[Extract<keyof Database, "public">]
@@ -2015,7 +2284,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      team_role: ["admin", "member", "owner"]
+      team_role: ["Admin", "Member", "Owner", "Viewer"]
     }
   },
   storage: {

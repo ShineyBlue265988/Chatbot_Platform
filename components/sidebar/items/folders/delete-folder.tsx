@@ -87,8 +87,37 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
 
     if (!setStateFunction) return
 
+    const folderContentTables = [
+      "chats",
+      "prompts",
+      "assistants",
+      "collections",
+      "files",
+      "models",
+      "tools"
+      // Add any other content types (table names) that can legitimately be in folders here
+    ] as const // Use 'as const' to create an array of literal types
+
+    // Infer the valid table names type from the array for type safety
+    type FolderContentTableName = (typeof folderContentTables)[number]
+
+    // Check if the current contentType variable's value is one of the valid table names
+    // This check is important both at runtime and helps TypeScript understand the type
+    if (!folderContentTables.includes(contentType as FolderContentTableName)) {
+      console.error(
+        `Attempted to delete folder content for invalid type: ${contentType}. Must be one of: ${folderContentTables.join(", ")}`
+      )
+      // Optionally show a toast or handle this error in the UI
+      return // Stop the function if the type is invalid
+    }
+
+    // Now that we've checked and confirmed it's a valid table name string,
+    // we can safely cast the contentType variable to the specific union type
+    const validTableName = contentType as FolderContentTableName
+
+    // Proceed with deletion using the validated and casted variable as the table name
     const { error } = await supabase
-      .from(contentType)
+      .from(validTableName) // <-- Use the variable whose type is now validated
       .delete()
       .eq("folder_id", folder.id)
 

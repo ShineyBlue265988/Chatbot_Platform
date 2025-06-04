@@ -28,7 +28,8 @@ export async function trackTokenUsage({
     input_tokens: usage.input_tokens ?? usage.promptTokens ?? 0,
     output_tokens: usage.output_tokens ?? usage.completionTokens ?? 0,
     total_tokens: usage.total_tokens ?? usage.totalTokens ?? 0,
-    created_at: new Date().toISOString().split("T")[0] // Use date only for daily aggregation
+    created_at: new Date().toISOString().split("T")[0],
+    agent_id: null
   }
 
   const { error } = await supabase.from("token_usage").upsert(insertData, {

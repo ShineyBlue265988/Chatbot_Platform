@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
     model_name: modelName,
     input_tokens: usage.input_tokens ?? usage.promptTokens ?? 0,
     output_tokens: usage.output_tokens ?? usage.completionTokens ?? 0,
-    total_tokens: usage.total_tokens ?? usage.totalTokens ?? 0
+    total_tokens: usage.total_tokens ?? usage.totalTokens ?? 0,
+    agent_id: null
   })
 
   if (error) {

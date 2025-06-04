@@ -8,7 +8,7 @@ interface UsageLimit {
   target: string // Required now since we always need to specify what we're limiting
   usage_limit: number
   created_at: string
-  updated_at: string
+  updated_at: string | null // Changed from string to string | null
 }
 
 interface TokenUsage {
@@ -25,7 +25,10 @@ export async function fetchUsageLimits(userId: string): Promise<UsageLimit[]> {
     .or(`type.eq.user,target.eq.${userId}`) // Get user's specific limits and any limits applied to them
 
   if (error) throw error
-  return data
+  return data.map(limit => ({
+    ...limit,
+    type: limit.type as "model" | "user" | "agent" | "provider"
+  }))
 }
 
 export async function checkBeforeGeneration({

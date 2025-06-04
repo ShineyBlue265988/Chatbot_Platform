@@ -98,8 +98,6 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       return
     }
 
-    console.log("💾 Starting save process for workspace:", selectedWorkspace.id)
-
     try {
       // Get current user
       const {
@@ -114,7 +112,6 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       let imagePath = selectedWorkspace.image_path || ""
 
       if (selectedImage) {
-        console.log("🖼️ Uploading new image...")
         imagePath = await uploadWorkspaceImage(selectedWorkspace, selectedImage)
 
         const url = (await getWorkspaceImageFromStorage(imagePath)) || ""
@@ -161,8 +158,6 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
 
         if (!teamId) {
           // Create a new team first
-          console.log("🏗️ Creating new team...")
-
           // Use teamName if provided, otherwise use original workspace name + "Team"
           const finalTeamName =
             teamName.trim() || `${selectedWorkspace.name} Team`
@@ -187,47 +182,27 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
           }
 
           teamId = newTeam.id
-          console.log(
-            "✅ Team created successfully:",
-            teamId,
-            "with name:",
-            finalTeamName
-          )
-
           // Add the user as a team member (owner)
           const { error: memberError } = await supabase
             .from("team_members")
             .insert({
               team_id: teamId,
               user_id: user.id,
-              role: "owner"
+              role: "Owner"
             })
 
           if (memberError) {
-            console.error("❌ Failed to add user as team member:", memberError)
           } else {
-            console.log("✅ User added as team owner")
           }
         }
-
-        console.log("👥 Converting to team workspace with team_id:", teamId)
 
         updateData.team_id = teamId
         updateData.user_id = user.id
       } else {
         // Converting to private workspace - CLEANUP TEAM STUFF
-        console.log(
-          "🔒 Converting to private workspace - cleaning up team associations..."
-        )
-
         const currentTeamId = workspace.team_id
 
         if (currentTeamId) {
-          console.log(
-            "🧹 Cleaning up team associations for team:",
-            currentTeamId
-          )
-
           // 1. Remove the user from team_members for this team
           const { error: removeMemberError } = await supabase
             .from("team_members")
@@ -256,21 +231,11 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
             .eq("team_id", currentTeamId)
             .neq("id", selectedWorkspace.id) // Exclude current workspace
 
-          console.log("🔍 Remaining members:", remainingMembers?.length || 0)
-          console.log(
-            "🔍 Remaining workspaces:",
-            remainingWorkspaces?.length || 0
-          )
-
           // 3. If no other members and no other workspaces, delete the team
           if (
             (!remainingMembers || remainingMembers.length === 0) &&
             (!remainingWorkspaces || remainingWorkspaces.length === 0)
           ) {
-            console.log(
-              "🗑️ Team has no other members or workspaces, deleting team..."
-            )
-
             const { error: deleteTeamError } = await supabase
               .from("teams")
               .delete()
@@ -297,9 +262,6 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         updateData.image_path = imagePath
       }
 
-      console.log("📝 Update data prepared:", updateData)
-      console.log("🆔 Updating workspace ID:", selectedWorkspace.id)
-
       // Use direct Supabase update
       const { data: updatedWorkspace, error: updateError } = await supabase
         .from("workspaces")
@@ -316,8 +278,6 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       if (!updatedWorkspace) {
         throw new Error("No workspace was updated")
       }
-
-      console.log("✅ Workspace updated successfully:", updatedWorkspace)
 
       // Update chat settings if all required fields are present
       if (

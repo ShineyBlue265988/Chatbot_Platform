@@ -46,10 +46,10 @@ export async function checkUsageLimits({
   for (const limit of limits) {
     const currentTotal = totalUsage + requestedTokens
 
-    if (currentTotal > limit.limit) {
+    if (currentTotal > limit.usage_limit) {
       return {
         allowed: false,
-        reason: `${limit.type} limit of ${limit.limit} tokens would be exceeded`
+        reason: `${limit.type} limit of ${limit.usage_limit} tokens would be exceeded`
       }
     }
   }

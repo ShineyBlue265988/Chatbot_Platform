@@ -18,7 +18,9 @@ export const acceptInvite = async (
   // 1. Add to team_members
   const { error: memberError } = await supabase
     .from("team_members")
-    .insert([{ team_id: teamId, user_id: userId, role: "member" }])
+    .insert([
+      { team_id: teamId, user_id: userId, role: "Member", status: "active" }
+    ])
   if (memberError) throw new Error(memberError.message)
 
   // 2. Update invite status
