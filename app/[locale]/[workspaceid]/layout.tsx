@@ -1,83 +1,54 @@
 "use client"
 
+import { Dashboard } from "@/components/ui/dashboard"
 import { ChatbotUIContext } from "@/context/context"
-import { getWorkspacesByUserId } from "@/db/workspaces"
+import { getAssistantWorkspacesByWorkspaceId } from "@/db/assistants"
+import { getChatsByWorkspaceId } from "@/db/chats"
+import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
+import { getFileWorkspacesByWorkspaceId } from "@/db/files"
+import { getFoldersByWorkspaceId } from "@/db/folders"
+import { getModelWorkspacesByWorkspaceId } from "@/db/models"
+import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
+import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
+import { getAssistantImageFromStorage } from "@/db/storage/assistant-images"
+import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
+import { getWorkspaceById } from "@/db/workspaces"
+import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
-import { useRouter } from "next/navigation"
-import { useContext, useEffect, useCallback } from "react"
+//
+// import { LLMID } from "@/types/llms"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { ReactNode, useContext, useEffect, useState } from "react"
+import Loading from "../loading"
 
-export default function WorkspaceLayout({
-  children,
-  params
-}: {
-  children: React.ReactNode
-  params: { workspaceid: string }
-}) {
-  const {
-    setChatMessages,
-    setSelectedChat,
-    setIsGenerating,
-    setFirstTokenReceived,
-    setChatFiles,
-    setChatImages,
-    setNewMessageFiles,
-    setNewMessageImages,
-    setShowFilesDisplay,
-    setUserInput,
-    setWorkspaces,
-    setSelectedWorkspace
-  } = useContext(ChatbotUIContext)
+interface WorkspaceLayoutProps {
+  children: ReactNode
+}
 
+export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const router = useRouter()
-  const workspaceId = params.workspaceid
 
-  // Memoize fetchWorkspaceData function
-  const fetchWorkspaceData = useCallback(
-    async (workspaceId: string) => {
-      try {
-        const session = (await supabase.auth.getSession()).data.session
-        if (!session) {
-          return router.push("/login")
-        }
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const workspaceId = params.workspaceid as string
 
-        const workspaces = await getWorkspacesByUserId(session.user.id)
-        setWorkspaces(workspaces)
-
-        const currentWorkspace = workspaces.find(w => w.id === workspaceId)
-        if (currentWorkspace) {
-          setSelectedWorkspace(currentWorkspace)
-        } else {
-          const homeWorkspace = workspaces.find(w => w.is_home)
-          if (homeWorkspace) {
-            router.push(`/${homeWorkspace.id}/chat`)
-          } else {
-            router.push("/login")
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching workspace data:", error)
-        router.push("/login")
-      }
-    },
-    [router, setWorkspaces, setSelectedWorkspace]
-  )
-
-  // Memoize chat state reset function
-  const resetChatState = useCallback(() => {
-    setUserInput("")
-    setChatMessages([])
-    setSelectedChat(null)
-    setIsGenerating(false)
-    setFirstTokenReceived(false)
-    setChatFiles([])
-    setChatImages([])
-    setNewMessageFiles([])
-    setNewMessageImages([])
-    setShowFilesDisplay(false)
-  }, [
-    setUserInput,
-    setChatMessages,
+  const {
+    setChatSettings,
+    setAssistants,
+    setAssistantImages,
+    setChats,
+    setCollections,
+    setFolders,
+    setFiles,
+    setPresets,
+    setPrompts,
+    setTools,
+    setModels,
+    selectedWorkspace,
+    setSelectedWorkspace,
     setSelectedChat,
+    setChatMessages,
+    setUserInput,
     setIsGenerating,
     setFirstTokenReceived,
     setChatFiles,
@@ -85,31 +56,130 @@ export default function WorkspaceLayout({
     setNewMessageFiles,
     setNewMessageImages,
     setShowFilesDisplay
-  ])
+  } = useContext(ChatbotUIContext)
 
-  // Initial session check and workspace data fetch
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    const initializeWorkspace = async () => {
+    ;(async () => {
       const session = (await supabase.auth.getSession()).data.session
+
       if (!session) {
         return router.push("/login")
       } else {
         await fetchWorkspaceData(workspaceId)
       }
-    }
+    })()
+  }, [])
 
-    initializeWorkspace()
-  }, [router, workspaceId, fetchWorkspaceData])
-
-  // Reset chat state when workspace changes
   useEffect(() => {
-    const handleWorkspaceChange = async () => {
-      await fetchWorkspaceData(workspaceId)
-      resetChatState()
+    ;(async () => await fetchWorkspaceData(workspaceId))()
+
+    setUserInput("")
+    setChatMessages([])
+    setSelectedChat(null)
+
+    setIsGenerating(false)
+    setFirstTokenReceived(false)
+
+    setChatFiles([])
+    setChatImages([])
+    setNewMessageFiles([])
+    setNewMessageImages([])
+    setShowFilesDisplay(false)
+  }, [workspaceId])
+
+  const fetchWorkspaceData = async (workspaceId: string) => {
+    setLoading(true)
+
+    const workspace = await getWorkspaceById(workspaceId)
+    setSelectedWorkspace(workspace)
+
+    const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
+    setAssistants(assistantData.assistants)
+
+    for (const assistant of assistantData.assistants) {
+      let url = ""
+
+      if (assistant.image_path) {
+        url = (await getAssistantImageFromStorage(assistant.image_path)) || ""
+      }
+
+      if (url) {
+        const response = await fetch(url)
+        const blob = await response.blob()
+        const base64 = await convertBlobToBase64(blob)
+
+        setAssistantImages(prev => [
+          ...prev,
+          {
+            assistantId: assistant.id,
+            path: assistant.image_path,
+            base64,
+            url
+          }
+        ])
+      } else {
+        setAssistantImages(prev => [
+          ...prev,
+          {
+            assistantId: assistant.id,
+            path: assistant.image_path,
+            base64: "",
+            url
+          }
+        ])
+      }
     }
 
-    handleWorkspaceChange()
-  }, [workspaceId, fetchWorkspaceData, resetChatState])
+    const chats = await getChatsByWorkspaceId(workspaceId)
+    setChats(chats)
 
-  return <>{children}</>
+    const collectionData =
+      await getCollectionWorkspacesByWorkspaceId(workspaceId)
+    setCollections(collectionData.collections)
+
+    const folders = await getFoldersByWorkspaceId(workspaceId)
+    setFolders(folders)
+
+    const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
+    setFiles(fileData.files)
+
+    const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
+    setPresets(presetData.presets)
+
+    const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
+    setPrompts(promptData.prompts)
+
+    const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
+    setTools(toolData.tools)
+
+    const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
+    setModels(modelData.models)
+
+    setChatSettings({
+      model:
+        searchParams.get("model") ||
+        workspace?.default_model ||
+        "gpt-4-1106-preview",
+      prompt:
+        workspace?.default_prompt ||
+        "You are a friendly, helpful AI assistant.",
+      temperature: workspace?.default_temperature || 0.5,
+      contextLength: workspace?.default_context_length || 4096,
+      includeProfileContext: workspace?.include_profile_context || true,
+      includeWorkspaceInstructions:
+        workspace?.include_workspace_instructions || true,
+      embeddingsProvider:
+        (workspace?.embeddings_provider as "openai" | "local") || "openai"
+    })
+
+    setLoading(false)
+  }
+
+  if (loading) {
+    return <Loading />
+  }
+
+  return <Dashboard>{children}</Dashboard>
 }
