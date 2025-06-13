@@ -14,19 +14,19 @@ export type Permission =
   | "chats.write"
   | "chats.delete"
   | "chats.manage"
-  | "files.read"
+  | "files.view"
   | "files.write"
   | "files.delete"
   | "files.manage"
-  | "assistants.read"
+  | "assistants.view"
   | "assistants.write"
   | "assistants.delete"
   | "assistants.manage"
-  | "prompts.read"
+  | "prompts.view"
   | "prompts.write"
   | "prompts.delete"
   | "prompts.manage"
-  | "presets.read"
+  | "presets.view"
   | "presets.write"
   | "presets.delete"
   | "presets.manage"
@@ -34,7 +34,7 @@ export type Permission =
   | "collections.write"
   | "collections.delete"
   | "collections.manage"
-  | "tools.read"
+  | "tools.view"
   | "tools.write"
   | "tools.delete"
   | "tools.manage"
@@ -52,7 +52,6 @@ export type Permission =
   | "usage.read"
   | "usage.manage"
   | "analytics.read"
-
 export const checkPermission = async (
   userId: string,
   workspaceId: string,
@@ -164,7 +163,7 @@ export const getUserPermissions = async (
     if (!userId || !workspaceId) {
       // Checks if IDs are missing
       console.log("Missing userId or workspaceId for permissions")
-      return [] // Returns empty array if IDs are missing
+      return []
     }
 
     // Check if user is workspace owner first
@@ -181,25 +180,22 @@ export const getUserPermissions = async (
     }
 
     if (workspace?.user_id === userId) {
-      // Workspace owner gets all permissions (assuming 'permissions' table exists)
+      console.log("User is workspace owner, fetching all permissions")
+      // Workspace owner gets all permissions
       const { data: allPermissions } = await supabase
-        .from("permissions") // <-- Possible issue here if 'permissions' table is missing or empty
+        .from("permissions")
         .select("id")
 
-      const permissions =
-        allPermissions?.map(p => (p as any).id as Permission) || [] // Added type assertion
-      console.log(
-        "User is workspace owner - granting all permissions:",
-        permissions
-      )
+      const permissions = allPermissions?.map(p => (p as any).id as Permission) || []
+      console.log("Workspace owner permissions:", permissions)
       return permissions
     }
 
     // If not owner, find the team_id associated with the workspace
     const teamId = workspace?.team_id
+    console.log("Team ID from workspace:", teamId)
 
     if (!teamId) {
-      // Returns empty array if no team_id found for workspace
       console.log(`Workspace ${workspaceId} has no associated team.`)
       return []
     }
@@ -207,25 +203,22 @@ export const getUserPermissions = async (
     // Get user's team membership for the specific team linked to the workspace
     const { data: teamMemberships, error: memberError } = await supabase
       .from("team_members")
-      .select(
-        `
-          role
-        `
-      )
+      .select("role")
       .eq("user_id", userId)
-      .eq("team_id", teamId) // Filter by the team_id found in the workspace
+      .eq("team_id", teamId)
+
+    console.log("Team memberships check result:", { teamMemberships, memberError })
 
     if (memberError || !teamMemberships) {
-      // Returns empty array on team membership fetch error or no memberships
       console.error("Team membership error:", memberError)
       return []
     }
-    console.log("Team memberships:------->", teamMemberships)
+
     // Get unique role names from the memberships found
     const roleNames = [...new Set(teamMemberships.map(tm => tm.role))]
+    console.log("User role names:", roleNames)
 
     if (roleNames.length === 0) {
-      // Returns empty array if no role names found
       console.log("User has no roles in the workspace's team")
       return []
     }
@@ -233,33 +226,30 @@ export const getUserPermissions = async (
     // Get roles and their permissions from the roles table
     const { data: roles, error: rolesError } = await supabase
       .from("roles")
-      .select("name, permissions") // Select name and permissions
-      .eq("workspace_id", workspaceId) // Filter roles by workspace_id
-      .in("name", roleNames) // Filter roles by the user's role names
+      .select("name, permissions")
+      .eq("workspace_id", workspaceId)
+      .in("name", roleNames)
+
+    console.log("Roles check result:", { roles, rolesError })
 
     if (rolesError || !roles) {
-      // <--- This check might be returning early if rolesError or roles is null/undefined/empty
       console.error("Roles error:", rolesError)
-      console.log("Fetched roles data:", roles) // <-- ADD THIS CONSOLE LOG
       return []
     }
-    console.log("Fetched roles data:", roles) // <-- ADD THIS CONSOLE LOG (outside the if check too)
 
     // Combine all permissions from all roles
     const allPermissions = new Set<Permission>()
     roles.forEach(role => {
-      // <--- If 'roles' is an empty array here, this loop won't run
-      // Ensure permissions is treated as an array of strings for Set operations
       const rolePermissions = (role as any).permissions as string[] | null
+      console.log(`Processing role ${role.name} permissions:`, rolePermissions)
 
       if (Array.isArray(rolePermissions)) {
-        // <--- This check might be failing if permissions is not an array
-        rolePermissions.forEach(perm => allPermissions.add(perm as Permission)) // <--- If permissions array is empty, nothing is added
+        rolePermissions.forEach(perm => allPermissions.add(perm as Permission))
       }
     })
 
     const permissions = Array.from(allPermissions)
-    console.log("User permissions:", permissions)
+    console.log("Final combined permissions:", permissions)
     return permissions
   } catch (error) {
     console.error("Get permissions failed:", error)

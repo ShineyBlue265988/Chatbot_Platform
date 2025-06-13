@@ -40,7 +40,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           onContentTypeChange={onContentTypeChange}
         />
         {/* Content sections - protected by permissions */}
-        <PermissionGuard permission="presets.read">
+        <PermissionGuard permission="presets.view">
           <SidebarSwitchItem
             icon={<IconAdjustmentsHorizontal size={SIDEBAR_ICON_SIZE} />}
             contentType="presets"
@@ -48,7 +48,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           />
         </PermissionGuard>
 
-        <PermissionGuard permission="prompts.read">
+        <PermissionGuard permission="prompts.view">
           <SidebarSwitchItem
             icon={<IconPencil size={SIDEBAR_ICON_SIZE} />}
             contentType="prompts"
@@ -64,7 +64,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           />
         </PermissionGuard>
 
-        <PermissionGuard permission="files.read">
+        <PermissionGuard permission="files.view">
           <SidebarSwitchItem
             icon={<IconFile size={SIDEBAR_ICON_SIZE} />}
             contentType="files"
@@ -80,7 +80,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           />
         </PermissionGuard>
 
-        <PermissionGuard permission="assistants.read">
+        <PermissionGuard permission="assistants.view">
           <SidebarSwitchItem
             icon={<IconRobotFace size={SIDEBAR_ICON_SIZE} />}
             contentType="assistants"
@@ -88,7 +88,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           />
         </PermissionGuard>
 
-        <PermissionGuard permission="tools.read">
+        <PermissionGuard permission="tools.view">
           <SidebarSwitchItem
             icon={<IconBolt size={SIDEBAR_ICON_SIZE} />}
             contentType="tools"

@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { GlobalState } from "@/components/utility/global-state"
 import { Providers } from "@/components/utility/providers"
 import TranslationsProvider from "@/components/utility/translations-provider"
+import { PermissionsProvider } from "@/context/permissions-context"
 import initTranslations from "@/lib/i18n"
 import { Database } from "@/supabase/types"
 import { cookies } from "next/headers"
@@ -101,7 +102,15 @@ export default async function RootLayout({
           >
             <Toaster richColors position="top-center" duration={3000} />
             <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
-              {session ? <GlobalState>{children}</GlobalState> : children}
+              {session ? (
+                <GlobalState>
+                  <PermissionsProvider>
+                    {children}
+                  </PermissionsProvider>
+                </GlobalState>
+              ) : (
+                children
+              )}
             </div>
           </TranslationsProvider>
         </Providers>
