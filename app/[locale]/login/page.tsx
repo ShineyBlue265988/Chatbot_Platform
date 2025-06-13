@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default async function Login({
   searchParams
 }: {
-  searchParams: { message: string }
+  searchParams: { message: string; type?: string }
 }) {
   const cookieStore = cookies()
   const supabase = createServerClient<Database>(
@@ -62,7 +62,23 @@ export default async function Login({
     })
 
     if (error) {
-      return redirect(`/login?message=${error.message}`)
+      return redirect(`/login?message=${error.message}&type=error`)
+    }
+
+    // Check if email is verified
+    if (!data.user.email_confirmed_at) {
+      // Resend verification email
+      await supabase.auth.resend({
+        type: "signup",
+        email: email,
+        options: {
+          emailRedirectTo: `${headers().get("origin")}/auth/callback`
+        }
+      })
+
+      return redirect(
+        `/login?message=Please check your email and verify your account before signing in. A new verification email has been sent.&type=warning`
+      )
     }
 
     const { data: homeWorkspace, error: homeWorkspaceError } = await supabase
@@ -93,6 +109,7 @@ export default async function Login({
   const signUp = async (formData: FormData) => {
     "use server"
 
+    const origin = headers().get("origin")
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
@@ -114,7 +131,7 @@ export default async function Login({
       const emailMatch = emailWhitelist?.includes(email)
       if (!domainMatch && !emailMatch) {
         return redirect(
-          `/login?message=Email ${email} is not allowed to sign up.`
+          `/login?message=Email ${email} is not allowed to sign up.&type=error`
         )
       }
     }
@@ -126,20 +143,43 @@ export default async function Login({
       email,
       password,
       options: {
-        // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
-        // emailRedirectTo: `${origin}/auth/callback`
+        emailRedirectTo: `${origin}/auth/callback`
       }
     })
 
     if (error) {
       console.error(error)
-      return redirect(`/login?message=${error.message}`)
+      return redirect(`/login?message=${error.message}&type=error`)
     }
 
-    return redirect("/setup")
+    return redirect(
+      "/login?message=Check your email to continue the sign up process. Please click the verification link in your email.&type=success"
+    )
+  }
 
-    // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
-    // return redirect("/login?message=Check email to continue sign in process")
+  const resendVerification = async (formData: FormData) => {
+    "use server"
+
+    const origin = headers().get("origin")
+    const email = formData.get("email") as string
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`
+      }
+    })
+
+    if (error) {
+      return redirect(`/login?message=${error.message}&type=error`)
+    }
+
+    return redirect(
+      "/login?message=Verification email sent! Please check your email.&type=success"
+    )
   }
 
   const handleResetPassword = async (formData: FormData) => {
@@ -155,10 +195,24 @@ export default async function Login({
     })
 
     if (error) {
-      return redirect(`/login?message=${error.message}`)
+      return redirect(`/login?message=${error.message}&type=error`)
     }
 
-    return redirect("/login?message=Check email to reset password")
+    return redirect("/login?message=Check email to reset password&type=success")
+  }
+
+  // Determine message styling based on type
+  const getMessageStyling = (type?: string) => {
+    switch (type) {
+      case "success":
+        return "bg-green-100 text-green-800 border border-green-200"
+      case "warning":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-200"
+      case "error":
+        return "bg-red-100 text-red-800 border border-red-200"
+      default:
+        return "bg-foreground/10 text-foreground"
+    }
   }
 
   return (
@@ -210,8 +264,21 @@ export default async function Login({
           </button>
         </div>
 
+        {/* Resend verification email section */}
+        <div className="text-muted-foreground mt-2 flex justify-center text-sm">
+          <span className="mr-1">Didn&apos;t receive verification email?</span>
+          <button
+            formAction={resendVerification}
+            className="text-primary ml-1 underline hover:opacity-80"
+          >
+            Resend
+          </button>
+        </div>
+
         {searchParams?.message && (
-          <p className="bg-foreground/10 text-foreground mt-4 p-4 text-center">
+          <p
+            className={`mt-4 rounded-md p-4 text-center ${getMessageStyling(searchParams.type)}`}
+          >
             {searchParams.message}
           </p>
         )}
