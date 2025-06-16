@@ -374,7 +374,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     return (
       <WorkspaceLoading
         workspaceName={selectedWorkspace?.name}
-        phase={loadingPhase}
+        // phase={loadingPhase}
       />
     )
   }
