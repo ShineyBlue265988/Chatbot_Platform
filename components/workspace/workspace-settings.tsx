@@ -105,42 +105,91 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       } = await supabase.auth.getUser()
 
       if (!user) {
+        console.error("❌ User not authenticated")
         toast.error("User not authenticated")
         return
       }
 
+      console.log("🔄 Starting workspace update for:", selectedWorkspace.id)
+      console.log(
+        "🔍 Conversion type:",
+        isTeamWorkspace ? "Private → Team" : "Team → Private"
+      )
+
+      // Handle image upload if needed
       let imagePath = selectedWorkspace.image_path || ""
-
       if (selectedImage) {
-        imagePath = await uploadWorkspaceImage(selectedWorkspace, selectedImage)
+        console.log("🖼️ Uploading workspace image...")
+        try {
+          imagePath = await uploadWorkspaceImage(
+            selectedWorkspace,
+            selectedImage
+          )
+          const url = (await getWorkspaceImageFromStorage(imagePath)) || ""
 
-        const url = (await getWorkspaceImageFromStorage(imagePath)) || ""
+          if (url) {
+            const response = await fetch(url)
+            const blob = await response.blob()
+            const base64 = await convertBlobToBase64(blob)
 
-        if (url) {
-          const response = await fetch(url)
-          const blob = await response.blob()
-          const base64 = await convertBlobToBase64(blob)
-
-          setWorkspaceImages(prev => [
-            ...prev,
-            {
-              workspaceId: selectedWorkspace.id,
-              path: imagePath,
-              base64,
-              url
-            }
-          ])
+            setWorkspaceImages(prev => [
+              ...prev,
+              {
+                workspaceId: selectedWorkspace.id,
+                path: imagePath,
+                base64,
+                url
+              }
+            ])
+            console.log("✅ Workspace image uploaded successfully")
+          }
+        } catch (imageError) {
+          console.error("⚠️ Image upload failed:", imageError)
+          // Continue without failing the entire operation
         }
       }
 
-      // Cast workspace to any to access team_id
+      // Get current workspace state
       const workspace = selectedWorkspace as any
+      const currentTeamId = workspace.team_id
 
-      // Prepare update data based on workspace type
+      console.log("🔍 Current workspace state:", {
+        id: selectedWorkspace.id,
+        name: selectedWorkspace.name,
+        currentTeamId,
+        isTeamWorkspace,
+        userId: user.id
+      })
+
+      // Verify workspace exists and get current state
+      const { data: existingWorkspace, error: checkError } = await supabase
+        .from("workspaces")
+        .select("*")
+        .eq("id", selectedWorkspace.id)
+        .maybeSingle()
+
+      if (checkError) {
+        console.error("❌ Workspace verification failed:", checkError)
+        throw new Error(`Failed to verify workspace: ${checkError.message}`)
+      }
+
+      if (!existingWorkspace) {
+        console.error("❌ Workspace not found")
+        throw new Error("Workspace not found. It may have been deleted.")
+      }
+
+      console.log("✅ Workspace verified:", {
+        id: existingWorkspace.id,
+        name: existingWorkspace.name,
+        currentTeamId: existingWorkspace.team_id,
+        currentUserId: existingWorkspace.user_id
+      })
+
+      // Prepare base update data
       let updateData: any = {
-        name,
-        description,
-        instructions,
+        name: name.trim(),
+        description: description.trim(),
+        instructions: instructions.trim(),
         default_model: defaultChatSettings.model,
         default_prompt: defaultChatSettings.prompt,
         default_temperature: defaultChatSettings.temperature,
@@ -152,25 +201,34 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         updated_at: new Date().toISOString()
       }
 
+      // Add image path if updated
+      if (imagePath && imagePath !== selectedWorkspace.image_path) {
+        updateData.image_path = imagePath
+      }
+
+      // Handle workspace type conversion
       if (isTeamWorkspace) {
-        // Converting to team workspace
-        let teamId = workspace.team_id
+        // ========================================
+        // CONVERTING TO TEAM WORKSPACE
+        // ========================================
+        console.log("🔄 Converting to team workspace...")
+
+        let teamId = currentTeamId
 
         if (!teamId) {
-          // Create a new team first
-          // Use teamName if provided, otherwise use original workspace name + "Team"
+          // Create new team
+          console.log("📝 Creating new team...")
           const finalTeamName =
             teamName.trim() || `${selectedWorkspace.name} Team`
 
-          // Create team - use raw query to avoid TypeScript issues
           const { data: newTeam, error: teamError } = await supabase
             .from("teams")
             .insert([
               {
+                name: finalTeamName,
                 description: `Team workspace for ${selectedWorkspace.name}`,
                 creator_id: user.id,
-                created_at: new Date().toISOString(),
-                name: finalTeamName
+                created_at: new Date().toISOString()
               }
             ])
             .select()
@@ -182,113 +240,188 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
           }
 
           teamId = newTeam.id
-          // Add the user as a team member (owner)
+          console.log("✅ Team created successfully:", {
+            id: teamId,
+            name: finalTeamName
+          })
+
+          // Add user as team owner
+          console.log("👤 Adding user as team owner...")
           const { error: memberError } = await supabase
             .from("team_members")
             .insert({
               team_id: teamId,
               user_id: user.id,
+              status: "active",
               role: "Owner"
             })
 
           if (memberError) {
-          } else {
+            console.error("❌ Failed to add team member:", memberError)
+            // Rollback: delete the created team
+            await supabase.from("teams").delete().eq("id", teamId)
+            throw new Error(`Failed to add team member: ${memberError.message}`)
           }
+
+          console.log("✅ User added as team owner")
+        } else {
+          console.log("✅ Using existing team:", teamId)
         }
 
+        // Set team workspace data
         updateData.team_id = teamId
         updateData.user_id = user.id
       } else {
-        // Converting to private workspace - CLEANUP TEAM STUFF
-        const currentTeamId = workspace.team_id
+        // ========================================
+        // CONVERTING TO PRIVATE WORKSPACE
+        // ========================================
+        console.log("🔄 Converting to private workspace...")
 
         if (currentTeamId) {
-          // 1. Remove the user from team_members for this team
+          console.log("🧹 Cleaning up team associations...")
+
+          // Remove all team members
+          console.log("👥 Removing team members...")
           const { error: removeMemberError } = await supabase
             .from("team_members")
             .delete()
             .eq("team_id", currentTeamId)
-            .eq("user_id", user.id)
 
           if (removeMemberError) {
             console.error(
-              "⚠️ Failed to remove user from team members:",
+              "⚠️ Failed to remove team members:",
               removeMemberError
             )
           } else {
-            console.log("✅ User removed from team members")
+            console.log("✅ Team members removed")
           }
 
-          // 2. Check if this team has any other members or workspaces
-          const { data: remainingMembers } = await supabase
-            .from("team_members")
-            .select("user_id")
-            .eq("team_id", currentTeamId)
+          // Check if team has other workspaces
+          console.log("🔍 Checking for other team workspaces...")
+          const { data: remainingWorkspaces, error: checkRemainingError } =
+            await supabase
+              .from("team_workspaces")
+              .select("workspace_id")
+              .eq("team_id", currentTeamId)
+              .neq("workspace_id", selectedWorkspace.id)
 
-          const { data: remainingWorkspaces } = await supabase
-            .from("workspaces")
-            .select("id")
-            .eq("team_id", currentTeamId)
-            .neq("id", selectedWorkspace.id) // Exclude current workspace
+          if (checkRemainingError) {
+            console.error(
+              "⚠️ Failed to check remaining workspaces:",
+              checkRemainingError
+            )
+          }
 
-          // 3. If no other members and no other workspaces, delete the team
-          if (
-            (!remainingMembers || remainingMembers.length === 0) &&
-            (!remainingWorkspaces || remainingWorkspaces.length === 0)
-          ) {
+          console.log(
+            "🔍 Remaining workspaces:",
+            remainingWorkspaces?.length || 0
+          )
+
+          // Delete team if no other workspaces
+          if (!remainingWorkspaces || remainingWorkspaces.length === 0) {
+            console.log("🗑️ Deleting empty team...")
             const { error: deleteTeamError } = await supabase
               .from("teams")
               .delete()
               .eq("id", currentTeamId)
 
             if (deleteTeamError) {
-              console.error("⚠️ Failed to delete empty team:", deleteTeamError)
+              console.error("⚠️ Failed to delete team:", deleteTeamError)
             } else {
               console.log("✅ Empty team deleted successfully")
             }
           } else {
-            console.log(
-              "ℹ️ Team has other members/workspaces, keeping team but removing this workspace"
-            )
+            console.log("ℹ️ Team has other workspaces, keeping team")
           }
         }
 
+        // Set private workspace data
         updateData.user_id = user.id
         updateData.team_id = null
       }
 
-      // Only include image_path if it was updated
-      if (imagePath && imagePath !== selectedWorkspace.image_path) {
-        updateData.image_path = imagePath
-      }
+      // ========================================
+      // UPDATE WORKSPACE
+      // ========================================
+      console.log("💾 Updating workspace with data:", {
+        ...updateData,
+        // Don't log sensitive data, just structure
+        hasName: !!updateData.name,
+        hasDescription: !!updateData.description,
+        hasInstructions: !!updateData.instructions,
+        teamId: updateData.team_id,
+        userId: updateData.user_id
+      })
 
-      // Use direct Supabase update
       const { data: updatedWorkspace, error: updateError } = await supabase
         .from("workspaces")
         .update(updateData)
         .eq("id", selectedWorkspace.id)
         .select()
-        .single()
+        .maybeSingle()
 
       if (updateError) {
-        console.error("❌ Supabase update error:", updateError)
+        console.error("❌ Workspace update failed:", updateError)
         throw new Error(`Failed to update workspace: ${updateError.message}`)
       }
 
       if (!updatedWorkspace) {
-        throw new Error("No workspace was updated")
+        console.error("❌ No workspace was updated")
+
+        // Debug: Check current workspace state
+        const { data: debugWorkspace } = await supabase
+          .from("workspaces")
+          .select("id, name, user_id, team_id")
+          .eq("id", selectedWorkspace.id)
+          .maybeSingle()
+
+        console.log("🔍 Debug - Current workspace state:", debugWorkspace)
+
+        if (!debugWorkspace) {
+          throw new Error("Workspace was deleted during the update process")
+        }
+
+        throw new Error(
+          "Workspace update failed - no rows were affected. Check permissions."
+        )
       }
 
-      // Update chat settings if all required fields are present
+      console.log("✅ Workspace updated successfully:", {
+        id: updatedWorkspace.id,
+        name: updatedWorkspace.name,
+        teamId: updatedWorkspace.team_id,
+        userId: updatedWorkspace.user_id
+      })
+
+      // ========================================
+      // UPDATE LOCAL STATE
+      // ========================================
+      console.log("🔄 Updating local state...")
+
+      // Update selected workspace
+      setSelectedWorkspace(updatedWorkspace)
+
+      // Update workspaces list
+      setWorkspaces(workspaces => {
+        return workspaces.map(ws => {
+          if (ws.id === selectedWorkspace.id) {
+            return updatedWorkspace
+          }
+          return ws
+        })
+      })
+
+      // Update chat settings if valid
       if (
         defaultChatSettings.model &&
         defaultChatSettings.prompt &&
-        defaultChatSettings.temperature &&
-        defaultChatSettings.contextLength &&
-        defaultChatSettings.includeProfileContext &&
-        defaultChatSettings.includeWorkspaceInstructions &&
+        typeof defaultChatSettings.temperature === "number" &&
+        typeof defaultChatSettings.contextLength === "number" &&
+        typeof defaultChatSettings.includeProfileContext === "boolean" &&
+        typeof defaultChatSettings.includeWorkspaceInstructions === "boolean" &&
         defaultChatSettings.embeddingsProvider
       ) {
+        console.log("⚙️ Updating chat settings...")
         setChatSettings({
           model: defaultChatSettings.model as string,
           prompt: defaultChatSettings.prompt,
@@ -303,23 +436,43 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         })
       }
 
+      // Close dialog
       setIsOpen(false)
-      setSelectedWorkspace(updatedWorkspace)
-      setWorkspaces(workspaces => {
-        return workspaces.map(workspace => {
-          if (workspace.id === selectedWorkspace.id) {
-            return updatedWorkspace
-          }
-          return workspace
-        })
-      })
 
-      toast.success(
-        `Workspace ${isTeamWorkspace ? "converted to team workspace" : "converted to private workspace"}!`
-      )
+      // Show success message
+      const conversionType = isTeamWorkspace
+        ? "team workspace"
+        : "private workspace"
+      toast.success(`Workspace successfully converted to ${conversionType}!`)
+      console.log(`✅ Workspace conversion completed: ${conversionType}`)
+
+      // Refresh page if workspace type changed
+      const workspaceTypeChanged = isTeamWorkspace !== !!currentTeamId
+      if (workspaceTypeChanged) {
+        console.log(
+          "🔄 Workspace type changed, refreshing page in 2 seconds..."
+        )
+        toast.info("Refreshing page to apply changes...")
+
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      }
     } catch (error: any) {
-      console.error("❌ Error updating workspace:", error)
-      toast.error(`Failed to update workspace: ${error.message}`)
+      console.error("❌ Workspace update failed:", error)
+
+      // Show user-friendly error message
+      const errorMessage = error.message || "An unexpected error occurred"
+      toast.error(`Failed to update workspace: ${errorMessage}`)
+
+      // Log full error for debugging
+      console.error("Full error details:", {
+        error,
+        stack: error.stack,
+        selectedWorkspace: selectedWorkspace?.id,
+        isTeamWorkspace,
+        userId: (await supabase.auth.getUser()).data.user?.id
+      })
     }
   }
 
