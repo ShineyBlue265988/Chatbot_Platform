@@ -17,6 +17,7 @@ export const getHomeWorkspaceByUserId = async (userId: string) => {
 }
 
 export const getWorkspaceById = async (workspaceId: string) => {
+  console.trace("Call stack:")
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select("*")
@@ -33,6 +34,7 @@ export const getWorkspaceById = async (workspaceId: string) => {
 }
 
 export const getTeamIdsByUserId = async (userId: string) => {
+  console.trace("Call stack:")
   const { data, error } = await supabase
     .from("team_members")
     .select("team_id")
@@ -51,6 +53,7 @@ export const getWorkspacesByUserId = async (userId: string) => {
     .from("workspaces")
     .select("*")
     .eq("user_id", userId)
+    .is("team_id", null)
     .order("created_at", { ascending: false })
 
   if (!workspaces) {

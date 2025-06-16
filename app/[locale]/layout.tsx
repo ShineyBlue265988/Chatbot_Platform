@@ -104,9 +104,7 @@ export default async function RootLayout({
             <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
               {session ? (
                 <GlobalState>
-                  <PermissionsProvider>
-                    {children}
-                  </PermissionsProvider>
+                  <PermissionsProvider>{children}</PermissionsProvider>
                 </GlobalState>
               ) : (
                 children

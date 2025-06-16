@@ -11,7 +11,7 @@ import { OpenRouterLLM } from "@/types/llms"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { Dispatch, SetStateAction, createContext } from "react"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 interface ChatbotUIContext {
   // PROFILE STORE
@@ -317,6 +317,10 @@ export const ChatbotUIProvider: React.FC<{ children: React.ReactNode }> = ({
   // WORKSPACE STORE
   const [selectedWorkspace, setSelectedWorkspace] =
     useState<ChatbotUIContext["selectedWorkspace"]>(null)
+  useEffect(() => {
+    console.log("🏢 Selected workspace changed:", selectedWorkspace?.id)
+    console.trace("Workspace change triggered by:")
+  }, [selectedWorkspace])
   const [workspaceImages, setWorkspaceImages] = useState<
     ChatbotUIContext["workspaceImages"]
   >([])

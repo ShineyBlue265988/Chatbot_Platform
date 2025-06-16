@@ -1,5 +1,14 @@
-'use client'
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
+"use client"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef
+} from "react"
 import { Permission, getUserPermissions } from "@/lib/permissions"
 import { ChatbotUIContext } from "./context"
 
@@ -11,7 +20,9 @@ interface PermissionsContextType {
   refreshPermissions: () => Promise<void>
 }
 
-const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined)
+const PermissionsContext = createContext<PermissionsContextType | undefined>(
+  undefined
+)
 
 export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
   const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
@@ -19,14 +30,16 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchPermissions = async () => {
-    console.log("Fetching permissions for:", {
-      userId: profile?.user_id,
-      workspaceId: selectedWorkspace?.id
-    })
+  // Memoize user and workspace IDs to prevent unnecessary re-renders
+  const userId = useMemo(() => profile?.user_id, [profile?.user_id])
+  const workspaceId = useMemo(
+    () => selectedWorkspace?.id,
+    [selectedWorkspace?.id]
+  )
 
-    if (!profile?.user_id || !selectedWorkspace?.id) {
-      console.log("Missing profile or workspace, clearing permissions")
+  const fetchPermissions = useCallback(async () => {
+    // Remove excessive logging
+    if (!userId || !workspaceId) {
       setPermissions([])
       setLoading(false)
       return
@@ -36,11 +49,7 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
     setError(null)
 
     try {
-      const userPermissions = await getUserPermissions(
-        profile.user_id,
-        selectedWorkspace.id
-      )
-      console.log("Fetched permissions:", userPermissions)
+      const userPermissions = await getUserPermissions(userId, workspaceId)
       setPermissions(userPermissions)
     } catch (err: any) {
       console.error("Error fetching permissions:", err)
@@ -49,45 +58,43 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, workspaceId]) // Proper dependencies
 
-  // Initial fetch and when workspace/user changes
+  // Use proper dependencies
   useEffect(() => {
-    console.log("Permissions context effect triggered:", {
-      userId: profile?.user_id,
-      workspaceId: selectedWorkspace?.id
-    })
     fetchPermissions()
-  }, [profile?.user_id, selectedWorkspace?.id])
+  }, [fetchPermissions])
 
-  const hasPermission = (permission: Permission): boolean => {
-    const result = permissions.includes(permission)
-    console.log(`Checking permission ${permission}:`, {
-      hasPermission: result,
-      availablePermissions: permissions
-    })
-    return result
-  }
+  // Memoize hasPermission to prevent re-renders
+  const hasPermission = useCallback(
+    (permission: Permission): boolean => {
+      return permissions.includes(permission)
+    },
+    [permissions]
+  )
 
-  const refreshPermissions = async () => {
+  const refreshPermissions = useCallback(async () => {
     await fetchPermissions()
-  }
+  }, [fetchPermissions])
 
-  const value = {
-    permissions,
-    hasPermission,
-    loading,
-    error,
-    refreshPermissions
-  }
+  // Memoize the context value
+  const value = useMemo(
+    () => ({
+      permissions,
+      hasPermission,
+      loading,
+      error,
+      refreshPermissions
+    }),
+    [permissions, hasPermission, loading, error, refreshPermissions]
+  )
 
-  console.log("Permissions context value:", {
-    permissions,
-    loading,
-    error,
-    userId: profile?.user_id,
-    workspaceId: selectedWorkspace?.id
-  })
+  // Remove excessive logging - only log once when permissions change
+  useEffect(() => {
+    if (!loading) {
+      console.log("Permissions loaded:", permissions.length, "permissions")
+    }
+  }, [permissions, loading])
 
   return (
     <PermissionsContext.Provider value={value}>
@@ -99,7 +106,9 @@ export const PermissionsProvider = ({ children }: { children: ReactNode }) => {
 export const usePermissionsContext = () => {
   const context = useContext(PermissionsContext)
   if (context === undefined) {
-    throw new Error("usePermissionsContext must be used within a PermissionsProvider")
+    throw new Error(
+      "usePermissionsContext must be used within a PermissionsProvider"
+    )
   }
   return context
-} 
+}

@@ -30,7 +30,7 @@ import { OpenRouterLLM } from "@/types/llms"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
-import { FC, useEffect, useState } from "react"
+import { FC, useEffect, useState, useCallback, useRef } from "react"
 
 interface GlobalStateProps {
   children: React.ReactNode

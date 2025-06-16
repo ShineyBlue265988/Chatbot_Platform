@@ -186,7 +186,8 @@ export const getUserPermissions = async (
         .from("permissions")
         .select("id")
 
-      const permissions = allPermissions?.map(p => (p as any).id as Permission) || []
+      const permissions =
+        allPermissions?.map(p => (p as any).id as Permission) || []
       console.log("Workspace owner permissions:", permissions)
       return permissions
     }
@@ -207,7 +208,10 @@ export const getUserPermissions = async (
       .eq("user_id", userId)
       .eq("team_id", teamId)
 
-    console.log("Team memberships check result:", { teamMemberships, memberError })
+    console.log("Team memberships check result:", {
+      teamMemberships,
+      memberError
+    })
 
     if (memberError || !teamMemberships) {
       console.error("Team membership error:", memberError)

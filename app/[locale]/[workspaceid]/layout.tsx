@@ -15,10 +15,15 @@ import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
 import { getWorkspaceById } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
-//
-// import { LLMID } from "@/types/llms"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ReactNode, useContext, useEffect, useState } from "react"
+import {
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef
+} from "react"
 import Loading from "../loading"
 
 interface WorkspaceLayoutProps {
@@ -27,7 +32,6 @@ interface WorkspaceLayoutProps {
 
 export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const router = useRouter()
-
   const params = useParams()
   const searchParams = useSearchParams()
   const workspaceId = params.workspaceid as string
@@ -60,122 +64,244 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    ;(async () => {
-      const session = (await supabase.auth.getSession()).data.session
+  // Refs to prevent duplicate calls
+  const fetchingRef = useRef(false)
+  const currentWorkspaceRef = useRef<string | null>(null)
+  const sessionCheckedRef = useRef(false)
 
-      if (!session) {
-        return router.push("/login")
-      } else {
-        await fetchWorkspaceData(workspaceId)
-      }
-    })()
-  }, [])
-
-  useEffect(() => {
-    ;(async () => await fetchWorkspaceData(workspaceId))()
-
+  const resetChatState = useCallback(() => {
+    console.log("🔄 Resetting chat state")
     setUserInput("")
     setChatMessages([])
     setSelectedChat(null)
-
     setIsGenerating(false)
     setFirstTokenReceived(false)
-
     setChatFiles([])
     setChatImages([])
     setNewMessageFiles([])
     setNewMessageImages([])
     setShowFilesDisplay(false)
-  }, [workspaceId])
+  }, [
+    setUserInput,
+    setChatMessages,
+    setSelectedChat,
+    setIsGenerating,
+    setFirstTokenReceived,
+    setChatFiles,
+    setChatImages,
+    setNewMessageFiles,
+    setNewMessageImages,
+    setShowFilesDisplay
+  ])
 
-  const fetchWorkspaceData = async (workspaceId: string) => {
-    setLoading(true)
-
-    const workspace = await getWorkspaceById(workspaceId)
-    setSelectedWorkspace(workspace)
-
-    const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
-    setAssistants(assistantData.assistants)
-
-    for (const assistant of assistantData.assistants) {
-      let url = ""
-
-      if (assistant.image_path) {
-        url = (await getAssistantImageFromStorage(assistant.image_path)) || ""
+  const fetchWorkspaceData = useCallback(
+    async (workspaceId: string) => {
+      // Prevent duplicate calls for the same workspace
+      if (fetchingRef.current || currentWorkspaceRef.current === workspaceId) {
+        console.log(
+          "🚫 Already fetching workspace data or same workspace, skipping...",
+          workspaceId
+        )
+        return
       }
 
-      if (url) {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const base64 = await convertBlobToBase64(blob)
+      fetchingRef.current = true
+      currentWorkspaceRef.current = workspaceId
+      setLoading(true)
 
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64,
-            url
-          }
+      console.log("🏢 Starting fetchWorkspaceData for:", workspaceId)
+
+      try {
+        // Fetch workspace data
+        const workspace = await getWorkspaceById(workspaceId)
+        setSelectedWorkspace(workspace)
+
+        // Fetch all workspace-related data in parallel
+        const [
+          assistantData,
+          chats,
+          collectionData,
+          folders,
+          fileData,
+          presetData,
+          promptData,
+          toolData,
+          modelData
+        ] = await Promise.all([
+          getAssistantWorkspacesByWorkspaceId(workspaceId),
+          getChatsByWorkspaceId(workspaceId),
+          getCollectionWorkspacesByWorkspaceId(workspaceId),
+          getFoldersByWorkspaceId(workspaceId),
+          getFileWorkspacesByWorkspaceId(workspaceId),
+          getPresetWorkspacesByWorkspaceId(workspaceId),
+          getPromptWorkspacesByWorkspaceId(workspaceId),
+          getToolWorkspacesByWorkspaceId(workspaceId),
+          getModelWorkspacesByWorkspaceId(workspaceId)
         ])
-      } else {
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64: "",
-            url
+
+        // Set all the data
+        setAssistants(assistantData.assistants)
+        setChats(chats)
+        setCollections(collectionData.collections)
+        setFolders(folders)
+        setFiles(fileData.files)
+        setPresets(presetData.presets)
+        setPrompts(promptData.prompts)
+        setTools(toolData.tools)
+        setModels(modelData.models)
+
+        // Handle assistant images
+        const imagePromises = assistantData.assistants.map(async assistant => {
+          let url = ""
+          if (assistant.image_path) {
+            url =
+              (await getAssistantImageFromStorage(assistant.image_path)) || ""
           }
-        ])
+
+          if (url) {
+            try {
+              const response = await fetch(url)
+              const blob = await response.blob()
+              const base64 = await convertBlobToBase64(blob)
+              return {
+                assistantId: assistant.id,
+                path: assistant.image_path,
+                base64,
+                url
+              }
+            } catch (error) {
+              console.error("Error processing assistant image:", error)
+              return {
+                assistantId: assistant.id,
+                path: assistant.image_path,
+                base64: "",
+                url: ""
+              }
+            }
+          } else {
+            return {
+              assistantId: assistant.id,
+              path: assistant.image_path,
+              base64: "",
+              url: ""
+            }
+          }
+        })
+
+        const assistantImages = await Promise.all(imagePromises)
+        setAssistantImages(assistantImages)
+
+        // Set chat settings
+        setChatSettings({
+          model:
+            searchParams.get("model") ||
+            workspace?.default_model ||
+            "gpt-4-1106-preview",
+          prompt:
+            workspace?.default_prompt ||
+            "You are a friendly, helpful AI assistant.",
+          temperature: workspace?.default_temperature || 0.5,
+          contextLength: workspace?.default_context_length || 4096,
+          includeProfileContext: workspace?.include_profile_context || true,
+          includeWorkspaceInstructions:
+            workspace?.include_workspace_instructions || true,
+          embeddingsProvider:
+            (workspace?.embeddings_provider as "openai" | "local") || "openai"
+        })
+
+        console.log("✅ Workspace data loaded successfully for:", workspaceId)
+      } catch (error) {
+        console.error("❌ Error fetching workspace data:", error)
+        // Optionally redirect to error page or show error message
+      } finally {
+        setLoading(false)
+        fetchingRef.current = false
       }
+    },
+    [
+      setSelectedWorkspace,
+      setAssistants,
+      setChats,
+      setCollections,
+      setFolders,
+      setFiles,
+      setPresets,
+      setPrompts,
+      setTools,
+      setModels,
+      setAssistantImages,
+      setChatSettings,
+      searchParams
+    ]
+  )
+
+  const checkSessionAndFetchData = useCallback(
+    async (workspaceId: string) => {
+      if (
+        sessionCheckedRef.current &&
+        currentWorkspaceRef.current === workspaceId
+      ) {
+        console.log("🚫 Session already checked for this workspace")
+        return
+      }
+
+      console.log("🔐 Checking session for workspace:", workspaceId)
+
+      try {
+        const session = (await supabase.auth.getSession()).data.session
+
+        if (!session) {
+          console.log("❌ No session found, redirecting to login")
+          return router.push("/login")
+        }
+
+        sessionCheckedRef.current = true
+        await fetchWorkspaceData(workspaceId)
+      } catch (error) {
+        console.error("❌ Error checking session:", error)
+        router.push("/login")
+      }
+    },
+    [fetchWorkspaceData, router]
+  )
+
+  // Single useEffect to handle all initialization and workspace changes
+  useEffect(() => {
+    if (!workspaceId) {
+      console.log("❌ No workspaceId provided")
+      return
     }
 
-    const chats = await getChatsByWorkspaceId(workspaceId)
-    setChats(chats)
+    // If workspace changed, reset everything
+    if (currentWorkspaceRef.current !== workspaceId) {
+      console.log(
+        "🔄 Workspace changed from",
+        currentWorkspaceRef.current,
+        "to",
+        workspaceId
+      )
 
-    const collectionData =
-      await getCollectionWorkspacesByWorkspaceId(workspaceId)
-    setCollections(collectionData.collections)
+      // Reset refs
+      sessionCheckedRef.current = false
+      currentWorkspaceRef.current = null
 
-    const folders = await getFoldersByWorkspaceId(workspaceId)
-    setFolders(folders)
+      // Reset chat state
+      resetChatState()
 
-    const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
-    setFiles(fileData.files)
+      // Check session and fetch new workspace data
+      checkSessionAndFetchData(workspaceId)
+    }
+  }, [workspaceId, checkSessionAndFetchData, resetChatState])
 
-    const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
-    setPresets(presetData.presets)
-
-    const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
-    setPrompts(promptData.prompts)
-
-    const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
-    setTools(toolData.tools)
-
-    const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
-    setModels(modelData.models)
-
-    setChatSettings({
-      model:
-        searchParams.get("model") ||
-        workspace?.default_model ||
-        "gpt-4-1106-preview",
-      prompt:
-        workspace?.default_prompt ||
-        "You are a friendly, helpful AI assistant.",
-      temperature: workspace?.default_temperature || 0.5,
-      contextLength: workspace?.default_context_length || 4096,
-      includeProfileContext: workspace?.include_profile_context || true,
-      includeWorkspaceInstructions:
-        workspace?.include_workspace_instructions || true,
-      embeddingsProvider:
-        (workspace?.embeddings_provider as "openai" | "local") || "openai"
-    })
-
-    setLoading(false)
-  }
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log("🧹 Cleaning up workspace layout")
+      fetchingRef.current = false
+      currentWorkspaceRef.current = null
+      sessionCheckedRef.current = false
+    }
+  }, [])
 
   if (loading) {
     return <Loading />
