@@ -1,4 +1,5 @@
 import { ChatbotUIContext } from "@/context/context"
+// import {setSelectedWorkspace} from "@/context/context"
 import {
   PROFILE_CONTEXT_MAX,
   PROFILE_DISPLAY_NAME_MAX,
@@ -19,6 +20,7 @@ import {
   IconFileDownload,
   IconLoader2,
   IconLogout,
+  IconTrash,
   IconUser
 } from "@tabler/icons-react"
 import Image from "next/image"
@@ -41,6 +43,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "../ui/alert-dialog"
 import { ThemeSwitcher } from "./theme-switcher"
 
 interface ProfileSettingsProps {}
@@ -52,6 +65,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     envKeyMap,
     setAvailableHostedModels,
     setAvailableOpenRouterModels,
+    selectedWorkspace,
+    setSelectedWorkspace,
     availableOpenRouterModels
   } = useContext(ChatbotUIContext)
 
@@ -60,6 +75,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const [isOpen, setIsOpen] = useState(false)
+  const [isDeletingData, setIsDeletingData] = useState(false)
 
   const [displayName, setDisplayName] = useState(profile?.display_name || "")
   const [username, setUsername] = useState(profile?.username || "")
@@ -72,7 +88,6 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
   const [profileInstructions, setProfileInstructions] = useState(
     profile?.profile_context || ""
   )
-
   const [useAzureOpenai, setUseAzureOpenai] = useState(
     profile?.use_azure_openai
   )
@@ -123,6 +138,104 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     router.push("/login")
     router.refresh()
     return
+  }
+
+  const handleDeleteAllData = async () => {
+    setIsDeletingData(true)
+
+    try {
+      // Get the current session
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error("Session error:", sessionError)
+        toast.error("Authentication error. Please try logging in again.")
+        return
+      }
+
+      if (!session?.access_token) {
+        toast.error("You must be logged in to delete data")
+        return
+      }
+
+      console.log("Making delete request with token...")
+
+      const response = await fetch("/api/profile/delete-all-data", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`
+        }
+      })
+
+      const responseText = await response.text()
+      console.log("Response status:", response.status)
+      console.log("Response text:", responseText)
+
+      if (!response.ok) {
+        let errorMessage = "Failed to delete data"
+        try {
+          const errorData = JSON.parse(responseText)
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          errorMessage = responseText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+
+      const result = JSON.parse(responseText)
+      console.log("Delete result:", result)
+
+      toast.success("All your data has been deleted successfully!")
+
+      // Close the settings modal
+      setIsOpen(false)
+
+      // Fetch the home workspace and update context
+      if (result.homeWorkspaceId) {
+        try {
+          // Fetch the home workspace details
+          const { data: homeWorkspace, error: fetchError } = await supabase
+            .from("workspaces")
+            .select("*")
+            .eq("id", result.homeWorkspaceId)
+            .single()
+
+          if (fetchError) {
+            console.error("Error fetching home workspace:", fetchError)
+          } else if (homeWorkspace) {
+            // Update the context with the fresh home workspace
+            // setWorkspaces([homeWorkspace])
+            setSelectedWorkspace(homeWorkspace)
+
+            // Navigate to the home workspace
+            setTimeout(() => {
+              window.location.href = `/${homeWorkspace.id}/chat`
+            }, 500)
+            return
+          }
+        } catch (fetchError) {
+          console.error("Error fetching home workspace:", fetchError)
+        }
+      }
+
+      // Fallback: hard refresh
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } catch (error) {
+      console.error("Error deleting data:", error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete data. Please try again."
+      )
+    } finally {
+      setIsDeletingData(false)
+    }
   }
 
   const handleSave = async () => {
@@ -334,9 +447,10 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
           </SheetHeader>
 
           <Tabs defaultValue="profile">
-            <TabsList className="mt-4 grid w-full grid-cols-2">
+            <TabsList className="mt-4 grid w-full grid-cols-3">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="keys">API Keys</TabsTrigger>
+              <TabsTrigger value="data">Data</TabsTrigger>
             </TabsList>
 
             <TabsContent className="mt-4 space-y-4" value="profile">
@@ -724,27 +838,137 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                 )}
               </div>
             </TabsContent>
+
+            <TabsContent className="mt-4 space-y-4" value="data">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-lg font-semibold">
+                    Data Management
+                  </Label>
+                  <p className="text-muted-foreground text-sm">
+                    Manage your personal data and account information.
+                  </p>
+                </div>
+
+                <div className="border-destructive/20 bg-destructive/5 space-y-4 rounded-lg border p-4">
+                  <div className="space-y-2">
+                    <Label className="text-destructive text-base font-medium">
+                      Danger Zone
+                    </Label>
+                    <p className="text-muted-foreground text-sm">
+                      This action will permanently delete all your data
+                      including:
+                    </p>
+                    <ul className="text-muted-foreground ml-4 list-disc space-y-1 text-sm">
+                      <li>All chat conversations and messages</li>
+                      <li>Custom assistants and their configurations</li>
+                      <li>Uploaded files and collections</li>
+                      <li>Custom prompts and presets</li>
+                      <li>Workspace settings and data</li>
+                      <li>API keys and personal settings</li>
+                    </ul>
+                    <p className="text-destructive text-sm font-medium">
+                      This action cannot be undone!
+                    </p>
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        disabled={isDeletingData}
+                      >
+                        {isDeletingData ? (
+                          <>
+                            <IconLoader2 className="mr-2 size-4 animate-spin" />
+                            Deleting All Data...
+                          </>
+                        ) : (
+                          <>
+                            <IconTrash className="mr-2 size-4" />
+                            Delete All My Data
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-destructive">
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-2">
+                          <p>
+                            This will permanently delete all your data from our
+                            servers. This includes:
+                          </p>
+                          <ul className="ml-4 list-disc space-y-1">
+                            <li>All chat conversations and messages</li>
+                            <li>Custom assistants and configurations</li>
+                            <li>Uploaded files and collections</li>
+                            <li>Custom prompts and presets</li>
+                            <li>Workspace settings</li>
+                            <li>API keys and personal settings</li>
+                          </ul>
+                          <p className="text-destructive font-semibold">
+                            This action cannot be undone. Your account will
+                            remain active but all data will be permanently lost.
+                          </p>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAllData}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={isDeletingData}
+                        >
+                          {isDeletingData ? (
+                            <>
+                              <IconLoader2 className="mr-2 size-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Yes, delete all my data"
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+
+                <div className="bg-muted/50 space-y-2 rounded-lg border p-4">
+                  <Label className="text-base font-medium">Export Data</Label>
+                  <p className="text-muted-foreground text-sm">
+                    Download your Chatbot UI 1.0 data as JSON before deleting.
+                  </p>
+                  <WithTooltip
+                    display={
+                      <div>
+                        Download Chatbot UI 1.0 data as JSON. Import coming
+                        soon!
+                      </div>
+                    }
+                    trigger={
+                      <Button
+                        variant="outline"
+                        onClick={exportLocalStorageAsJSON}
+                        className="w-full"
+                      >
+                        <IconFileDownload className="mr-2 size-4" />
+                        Export Legacy Data
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
 
         <div className="mt-6 flex items-center">
           <div className="flex items-center space-x-1">
             <ThemeSwitcher />
-
-            <WithTooltip
-              display={
-                <div>
-                  Download Chatbot UI 1.0 data as JSON. Import coming soon!
-                </div>
-              }
-              trigger={
-                <IconFileDownload
-                  className="cursor-pointer hover:opacity-50"
-                  size={32}
-                  onClick={exportLocalStorageAsJSON}
-                />
-              }
-            />
           </div>
 
           <div className="ml-auto space-x-2">

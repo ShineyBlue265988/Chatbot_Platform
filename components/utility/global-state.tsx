@@ -181,7 +181,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       const teamWorkspaces = await getWorkspacesByTeamIds(teamIds)
       console.log("teamWorkspaces=============>", teamWorkspaces)
       const privateWorkspaces = await getWorkspacesByUserId(user.id)
-      console.log("privateWorkspaces=============>", privateWorkspaces)
+      // console.log("privateWorkspaces=============>", privateWorkspaces)
       const workspaces = [...teamWorkspaces, ...privateWorkspaces]
       console.log("workspaces=============>", workspaces)
       setWorkspaces(workspaces)

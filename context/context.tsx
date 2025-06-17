@@ -11,8 +11,8 @@ import { OpenRouterLLM } from "@/types/llms"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { Dispatch, SetStateAction, createContext } from "react"
-import React, { useState, useEffect } from "react"
-
+import React, { useState, useEffect, useCallback } from "react"
+import { findHomeWorkspace } from "@/lib/workspace-utils"
 interface ChatbotUIContext {
   // PROFILE STORE
   profile: Tables<"profiles"> | null
@@ -393,6 +393,26 @@ export const ChatbotUIProvider: React.FC<{ children: React.ReactNode }> = ({
   )
   // NEW PROPERTY
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Auto-select home workspace if no workspace is selected
+    if (workspaces.length > 0 && !selectedWorkspace) {
+      const homeWorkspace = findHomeWorkspace(workspaces)
+      if (homeWorkspace) {
+        console.log("Auto-selecting home workspace:", homeWorkspace.name)
+        setSelectedWorkspace(homeWorkspace)
+      }
+    }
+  }, [workspaces, selectedWorkspace, setSelectedWorkspace])
+
+  const resetToHomeWorkspace = useCallback(() => {
+    const homeWorkspace = findHomeWorkspace(workspaces)
+    if (homeWorkspace) {
+      setSelectedWorkspace(homeWorkspace)
+      return homeWorkspace
+    }
+    return null
+  }, [workspaces, setSelectedWorkspace])
 
   return (
     <ChatbotUIContext.Provider

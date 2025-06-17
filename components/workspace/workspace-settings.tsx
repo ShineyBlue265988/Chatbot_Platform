@@ -280,58 +280,49 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         if (currentTeamId) {
           console.log("🧹 Cleaning up team associations...")
 
-          // Remove all team members
-          console.log("👥 Removing team members...")
-          const { error: removeMemberError } = await supabase
+          // Check if user is team owner before allowing conversion
+          console.log("🔍 Checking team ownership...")
+          const { data: teamMember, error: memberCheckError } = await supabase
             .from("team_members")
-            .delete()
+            .select("role")
             .eq("team_id", currentTeamId)
+            .eq("user_id", user.id)
+            .eq("status", "active")
+            .single()
 
-          if (removeMemberError) {
+          if (memberCheckError) {
             console.error(
-              "⚠️ Failed to remove team members:",
-              removeMemberError
+              "❌ Failed to check team membership:",
+              memberCheckError
             )
-          } else {
-            console.log("✅ Team members removed")
+            throw new Error("Failed to verify team membership")
           }
 
-          // Check if team has other workspaces
-          console.log("🔍 Checking for other team workspaces...")
-          const { data: remainingWorkspaces, error: checkRemainingError } =
-            await supabase
-              .from("team_workspaces")
-              .select("workspace_id")
-              .eq("team_id", currentTeamId)
-              .neq("workspace_id", selectedWorkspace.id)
-
-          if (checkRemainingError) {
-            console.error(
-              "⚠️ Failed to check remaining workspaces:",
-              checkRemainingError
+          if (!teamMember || teamMember.role !== "Owner") {
+            console.error("❌ User is not team owner")
+            throw new Error(
+              "Only team owners can convert team workspaces to private workspaces"
             )
-          }
+          } else if (teamMember.role === "Owner") {
+            console.log("✅ User verified as team owner")
 
-          console.log(
-            "🔍 Remaining workspaces:",
-            remainingWorkspaces?.length || 0
-          )
-
-          // Delete team if no other workspaces
-          if (!remainingWorkspaces || remainingWorkspaces.length === 0) {
-            console.log("🗑️ Deleting empty team...")
-            const { error: deleteTeamError } = await supabase
-              .from("teams")
+            // Remove all team members
+            console.log("👥 Removing team members...")
+            const { error: removeMemberError } = await supabase
+              .from("team_members")
               .delete()
-              .eq("id", currentTeamId)
+              .eq("team_id", currentTeamId)
 
-            if (deleteTeamError) {
-              console.error("⚠️ Failed to delete team:", deleteTeamError)
+            if (removeMemberError) {
+              console.error(
+                "⚠️ Failed to remove team members:",
+                removeMemberError
+              )
             } else {
-              console.log("✅ Empty team deleted successfully")
+              console.log("✅ Team members removed")
             }
-          } else {
-            console.log("ℹ️ Team has other workspaces, keeping team")
+
+            // Delete team if no other workspaces
           }
         }
 
@@ -352,6 +343,19 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         teamId: updateData.team_id,
         userId: updateData.user_id
       })
+      // Ensure required fields are present and valid
+      if (!updateData.name || updateData.name.trim().length === 0) {
+        throw new Error("Workspace name is required")
+      }
+
+      if (!updateData.user_id) {
+        throw new Error("User ID is required")
+      }
+
+      // Ensure team_id is explicitly set to null for private workspaces
+      if (!isTeamWorkspace) {
+        updateData.team_id = null
+      }
 
       const { data: updatedWorkspace, error: updateError } = await supabase
         .from("workspaces")
@@ -363,6 +367,18 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
       if (updateError) {
         console.error("❌ Workspace update failed:", updateError)
         throw new Error(`Failed to update workspace: ${updateError.message}`)
+      }
+
+      console.log("🗑️ Deleting empty team...")
+      const { error: deleteTeamError } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", currentTeamId)
+
+      if (deleteTeamError) {
+        console.error("⚠️ Failed to delete team:", deleteTeamError)
+      } else {
+        console.log("ℹ️ Team has other workspaces, keeping team")
       }
 
       if (!updatedWorkspace) {

@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation"
 import { FC, useContext, useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
-
+import { toast } from "sonner"
 interface WorkspaceSwitcherProps {}
 
 export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
@@ -66,7 +66,11 @@ export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
     setWorkspaces([...workspaces, createdWorkspace])
     setSelectedWorkspace(createdWorkspace)
     setOpen(false)
+    toast.info("Refreshing page to apply changes...")
 
+    // setTimeout(() => {
+    //   window.location.reload()
+    // }, 2000)
     return router.push(`/${createdWorkspace.id}/chat`)
   }
 

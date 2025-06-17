@@ -5,7 +5,7 @@ import {
   declineInvite
 } from "@/db/team-invites"
 import { supabase } from "@/lib/supabase/browser-client"
-
+import { toast } from "sonner"
 const TeamInvitesList: React.FC = () => {
   const [invites, setInvites] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -71,6 +71,11 @@ const TeamInvitesList: React.FC = () => {
     setError(null)
     try {
       await acceptInvite(invite.id, invite.team_id, userId)
+      toast.info("Refreshing page to apply changes...")
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
       setInvites(invites.filter(i => i.id !== invite.id))
     } catch (e: any) {
       setError(e.message || "Failed to accept invite.")
