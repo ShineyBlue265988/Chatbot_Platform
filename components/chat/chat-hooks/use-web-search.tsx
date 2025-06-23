@@ -56,12 +56,12 @@ export const useWebSearch = () => {
 
       // Store the original user input
       const originalInput = query
+      console.log("Chat Messages:=============>", chatMessages)
 
       // Send the formatted prompt to the chat
       await handleSendMessage(searchContext, chatMessages, false)
-
       // Restore the original user input
-      setUserInput(originalInput)
+      setUserInput("")
     } catch (error) {
       console.error("Web search error:", error)
       await handleSendMessage(

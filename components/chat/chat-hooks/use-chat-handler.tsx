@@ -182,7 +182,21 @@ export const useChatHandler = () => {
   const handleFocusChatInput = () => {
     chatInputRef.current?.focus()
   }
+  const extractUserQuery = (content: string): string => {
+    const userQueryStart = "[USER_QUERY_START]"
+    const userQueryEnd = "[USER_QUERY_END]"
 
+    const startIndex = content.indexOf(userQueryStart)
+    const endIndex = content.indexOf(userQueryEnd)
+
+    if (startIndex !== -1 && endIndex !== -1) {
+      const queryStartPos = startIndex + userQueryStart.length
+      const extractedQuery = content.substring(queryStartPos, endIndex).trim()
+      return extractedQuery || content
+    }
+
+    return content
+  }
   const handleStopMessage = () => {
     if (abortController) {
       abortController.abort()
@@ -195,7 +209,9 @@ export const useChatHandler = () => {
     isRegeneration: boolean
   ) => {
     const startingInput = messageContent
-
+    // Store the original user input for chat naming
+    const originalUserInput = messageContent
+    const cleanUserQuery = extractUserQuery(messageContent)
     try {
       setUserInput("")
       setIsGenerating(true)
@@ -348,13 +364,14 @@ export const useChatHandler = () => {
           )
         }
       }
-
+      console.log("Original User Input========>", originalUserInput)
       if (!currentChat) {
         currentChat = await handleCreateChat(
           chatSettings!,
           profile!,
           selectedWorkspace!,
           messageContent,
+          cleanUserQuery, // Use original user input for chat name
           selectedAssistant!,
           newMessageFiles,
           setSelectedChat,

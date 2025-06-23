@@ -349,6 +349,7 @@ export const handleCreateChat = async (
   profile: Tables<"profiles">,
   selectedWorkspace: Tables<"workspaces">,
   messageContent: string,
+  originalUserQuery: string,
   selectedAssistant: Tables<"assistants">,
   newMessageFiles: ChatFile[],
   setSelectedChat: React.Dispatch<React.SetStateAction<Tables<"chats"> | null>>,
@@ -363,7 +364,7 @@ export const handleCreateChat = async (
     include_profile_context: chatSettings.includeProfileContext,
     include_workspace_instructions: chatSettings.includeWorkspaceInstructions,
     model: chatSettings.model,
-    name: messageContent.substring(0, 100),
+    name: originalUserQuery.substring(0, 100),
     prompt: chatSettings.prompt,
     temperature: chatSettings.temperature,
     embeddings_provider: chatSettings.embeddingsProvider

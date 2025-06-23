@@ -319,6 +319,9 @@ export const Message: FC<MessageProps> = ({
           ) : (
             <>
               <MessageMarkdown content={userQuery} />
+
+              <MessageMarkdown content={answerContent} />
+
               {hasSearchResults && (
                 <div className="text-muted-foreground mb-2 flex items-center space-x-2 text-xs">
                   <button
@@ -340,8 +343,6 @@ export const Message: FC<MessageProps> = ({
                   <pre className="whitespace-pre-wrap">{searchResults}</pre>
                 </div>
               )}
-
-              <MessageMarkdown content={answerContent} />
             </>
           )}
         </div>
