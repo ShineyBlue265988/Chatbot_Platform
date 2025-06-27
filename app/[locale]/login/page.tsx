@@ -9,6 +9,7 @@ import { get } from "@vercel/edge-config"
 import { Metadata } from "next"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton"
 
 export const metadata: Metadata = {
   title: "Login"
@@ -242,8 +243,9 @@ export default async function Login({
           name="password"
           placeholder="••••••••"
         />
+        <GoogleSignInButton />
 
-        <SubmitButton className="mb-2 rounded-md bg-blue-700 px-4 py-2 text-white">
+        <SubmitButton className="mb-2 rounded-md bg-blue-700 px-4 py-2 text-white hover:bg-blue-500 hover:opacity-80">
           Login
         </SubmitButton>
 

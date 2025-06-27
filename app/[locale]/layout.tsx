@@ -102,13 +102,9 @@ export default async function RootLayout({
           >
             <Toaster richColors position="top-center" duration={3000} />
             <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
-              {session ? (
-                <GlobalState>
-                  <PermissionsProvider>{children}</PermissionsProvider>
-                </GlobalState>
-              ) : (
-                children
-              )}
+              <GlobalState>
+                <PermissionsProvider>{children}</PermissionsProvider>
+              </GlobalState>
             </div>
           </TranslationsProvider>
         </Providers>

@@ -47,16 +47,17 @@ export const useWebSearch = () => {
       searchContext += `Based on the above search results, provide a comprehensive answer that:\n`
       searchContext += `1. Synthesizes the key information from multiple sources\n`
       searchContext += `2. Provides relevant details and context\n`
-      searchContext += `3. Cites specific sources when referencing information\n`
+      searchContext += `3. Must cites specific sources when referencing information with [number].\n`
       searchContext += `4. Maintains a clear and organized structure\n`
       searchContext += `5. Focuses on the most relevant and reliable information\n`
+      searchContext += `6. Please return all the 10 search results with link at the end of the response.\n`
       searchContext += `[INSTRUCTIONS_END]\n\n`
       searchContext += `[USER_QUERY_START]${query}[USER_QUERY_END]\n\n`
       // searchContext += `Answer:`;
 
       // Store the original user input
       const originalInput = query
-      console.log("Chat Messages:=============>", chatMessages)
+      // console.log("Chat Messages:=============>", chatMessages)
 
       // Send the formatted prompt to the chat
       await handleSendMessage(searchContext, chatMessages, false)

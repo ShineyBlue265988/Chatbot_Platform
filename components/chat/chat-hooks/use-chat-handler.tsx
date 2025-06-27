@@ -333,6 +333,7 @@ export const useChatHandler = () => {
           setChatMessages,
           setToolInUse
         )
+        // console.log("generatedText--->",generatedText);
       } else {
         if (modelData!.provider === "ollama") {
           generatedText = await handleLocalChat(
@@ -364,7 +365,7 @@ export const useChatHandler = () => {
           )
         }
       }
-      console.log("Original User Input========>", originalUserInput)
+      // console.log("Original User Input========>", originalUserInput)
       if (!currentChat) {
         currentChat = await handleCreateChat(
           chatSettings!,

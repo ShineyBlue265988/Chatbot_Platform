@@ -204,6 +204,8 @@ export const Message: FC<MessageProps> = ({
         .split("[USER_QUERY_START]")[1]
         .split("[USER_QUERY_END]")[0]
     : ""
+  // console.log("messageContent",message.content)
+  // console.log("userQuery", userQuery)
 
   // Get the actual answer content (everything after the last marker)
   const answerContent =
@@ -322,7 +324,7 @@ export const Message: FC<MessageProps> = ({
 
               <MessageMarkdown content={answerContent} />
 
-              {hasSearchResults && (
+              {message.role === "assistant" && hasSearchResults && (
                 <div className="text-muted-foreground mb-2 flex items-center space-x-2 text-xs">
                   <button
                     onClick={() => setShowSearchResults(!showSearchResults)}
@@ -333,16 +335,18 @@ export const Message: FC<MessageProps> = ({
                     ) : (
                       <IconChevronDown size={16} />
                     )}
-                    <span className="ml-1">Search Results</span>
+                    <span className="ml-1">Sources</span>
                   </button>
                 </div>
               )}
 
-              {showSearchResults && hasSearchResults && (
-                <div className="text-muted-foreground mb-4 text-xs">
-                  <pre className="whitespace-pre-wrap">{searchResults}</pre>
-                </div>
-              )}
+              {message.role === "assistant" &&
+                showSearchResults &&
+                hasSearchResults && (
+                  <div className="text-muted-foreground mb-4 text-xs">
+                    <pre className="whitespace-pre-wrap">{searchResults}</pre>
+                  </div>
+                )}
             </>
           )}
         </div>
